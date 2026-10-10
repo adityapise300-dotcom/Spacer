@@ -23,7 +23,7 @@ const registerSchema = (key, withBusiness) =>
   Joi.object({
     [key]: Joi.object({
       name: Joi.string().trim().min(2).max(80).required(),
-      email: Joi.string().trim().lowercase().email().required(),
+      email: Joi.string().trim().lowercase().email({ tlds: { allow: false } }).required(),
       phone,
       ...(withBusiness ? { businessName: Joi.string().trim().min(2).max(120).required() } : {}),
       password,
@@ -33,7 +33,7 @@ const registerSchema = (key, withBusiness) =>
 
 const loginSchema = Joi.object({
   login: Joi.object({
-    email: Joi.string().trim().lowercase().email().required(),
+    email: Joi.string().trim().lowercase().email({ tlds: { allow: false } }).required(),
     password: Joi.string().max(72).required(),
   }).required(),
 }).required();
