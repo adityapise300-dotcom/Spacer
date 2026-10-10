@@ -17,6 +17,7 @@ const bookingSchema = new mongoose.Schema(
     priceBreakdown: { type: mongoose.Schema.Types.Mixed }, // the "Why this price?" snapshot
     status: { type: String, enum: BOOKING_STATUSES, default: 'pending_payment' },
     paymentExpiresAt: { type: Date },
+    razorpayOrderId: { type: String },
     refundAmount: { type: Number, default: 0 },
     cancelledAt: { type: Date },
     isSimulated: { type: Boolean, default: false }, // true for synthetic history

@@ -104,6 +104,12 @@ const paymentSchema = Joi.object({
   payment: Joi.object({ method: Joi.string().valid(...PAYMENT_METHODS).required() }).required(),
 }).required();
 
+const razorpayVerifySchema = Joi.object({
+  razorpay_order_id: Joi.string().max(100).required(),
+  razorpay_payment_id: Joi.string().max(100).required(),
+  razorpay_signature: Joi.string().hex().length(64).required(),
+}).required();
+
 const searchQuerySchema = Joi.object({
   q: Joi.string().trim().max(100).allow(''),
   lat: Joi.number().min(-90).max(90).empty(''),
@@ -139,7 +145,7 @@ module.exports = {
   registerOwnerSchema: registerSchema('owner', true),
   loginSchema,
   profileSchema: profileSchema(false),
-  zoneSchema, slotCreateSchema, slotUpdateSchema, bookingSchema, paymentSchema,
+  zoneSchema, slotCreateSchema, slotUpdateSchema, bookingSchema, paymentSchema, razorpayVerifySchema,
   searchQuerySchema, zoneDetailsQuerySchema, ownerBookingStatusSchema, ownerBookingsQuerySchema,
   revenueQuerySchema, insightsQuerySchema,
 };

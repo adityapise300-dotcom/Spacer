@@ -10,7 +10,7 @@ SPACER (Vehicle Accommodation Zone) is a smart parking marketplace. Drivers find
 ```bash
 npm init -y
 npm pkg set main=app.js scripts.start="node app.js" scripts.dev="nodemon app.js" scripts.seed="node seeds/index.js" scripts.simulate="node seeds/simulate.js"
-npm install express@4 mongoose ejs ejs-mate express-session connect-mongo@5 bcrypt joi connect-flash method-override helmet express-rate-limit express-mongo-sanitize morgan dotenv
+npm install express@4 mongoose razorpay ejs ejs-mate express-session connect-mongo@5 bcrypt joi connect-flash method-override helmet express-rate-limit express-mongo-sanitize morgan dotenv
 npm install --save-dev nodemon
 cp .env.example .env        # Windows: copy .env.example .env
 ```
@@ -46,7 +46,7 @@ Zone photos are stored as URL strings in `ParkingZone.images`. In `seeds/data.js
 - **No double booking:** a slot is busy when a confirmed/checked-in booking, or an unexpired 10-minute payment hold, overlaps the window (`existing.start < newEnd AND existing.end > newStart`). After inserting, the booking re-checks for a rival; the smaller `_id` wins and the other is removed.
 - **Cancellation:** free more than 2 hours before start; otherwise 50% refund.
 - **Roles:** drivers get a 403 on `/owner/*` and owners on `/user/*`.
-- **Mock payment:** about 90% success (`PAYMENT_SUCCESS_RATE`). `services/paymentService.js` is shaped so Razorpay can replace it.
+- **Payments:** Razorpay Checkout in Test Mode (order, popup, HMAC signature check, server-side fetch, refunds). Add your `rzp_test_` keys to `.env`. Test UPI: `success@razorpay` / `failure@razorpay`.
 - **Timezone:** the app runs in `Asia/Kolkata`.
 
 ## Smart pricing and demand forecast

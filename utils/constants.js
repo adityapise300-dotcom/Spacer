@@ -9,7 +9,7 @@ module.exports = {
   BLOCKING_STATUSES: ['confirmed', 'checked_in'],
   // Statuses that count as real demand when forecasting and for revenue
   HELD_STATUSES: ['confirmed', 'checked_in', 'completed', 'no_show'],
-  PAYMENT_METHODS: ['upi', 'card', 'wallet'],
+  PAYMENT_METHODS: ['upi', 'card', 'wallet', 'netbanking', 'emi', 'paylater', 'other'],
   HOLD_MINUTES: 10,
   FREE_CANCEL_HOURS: 2,
   LATE_CANCEL_REFUND: 0.5,

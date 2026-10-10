@@ -12,6 +12,8 @@ const transactionSchema = new mongoose.Schema(
     method: { type: String, enum: PAYMENT_METHODS, required: true },
     status: { type: String, enum: ['success', 'failed', 'refunded'], required: true },
     referenceId: { type: String, required: true, unique: true },
+    razorpayOrderId: { type: String },
+    razorpayPaymentId: { type: String },
     paidAt: { type: Date },
   },
   { timestamps: true }

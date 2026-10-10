@@ -1,4 +1,5 @@
 const Booking = require('../../models/Booking');
+const User = require('../../models/User');
 const ExpressError = require('../../utils/ExpressError');
 const paymentService = require('../../services/paymentService');
 
@@ -19,20 +20,42 @@ exports.payPage = async (req, res) => {
   res.render('user/payment', { pageTitle: 'Payment', booking });
 };
 
-exports.pay = async (req, res) => {
+// JSON: creates the Razorpay order and returns what Checkout needs
+exports.createOrder = async (req, res) => {
   const booking = req.booking;
   assertPayable(booking);
-
-  const { success } = await paymentService.charge({
-    booking, userId: req.session.user.id, ownerId: booking.zone.owner, method: req.body.payment.method,
+  const order = await paymentService.createOrder(booking);
+  booking.razorpayOrderId = order.id;
+  await booking.save();
+  const me = await User.findById(req.session.user.id).select('name email phone').lean();
+  res.json({
+    keyId: process.env.RAZORPAY_KEY_ID,
+    orderId: order.id,
+    amount: order.amount,
+    currency: order.currency,
+    description: `${booking.zone.name} - slot ${booking.slotLabel}`,
+    prefill: { name: me.name, email: me.email, contact: me.phone },
   });
+};
 
-  if (!success) {
-    req.flash('error', 'Payment failed. No money was taken. You can retry while the hold is active.');
-    return res.redirect(`/user/bookings/${booking._id}/pay`);
+// JSON: verifies Razorpay's signature, saves the transaction, confirms the booking
+exports.verify = async (req, res) => {
+  const booking = req.booking;
+  assertPayable(booking);
+  const { razorpay_order_id: orderId, razorpay_payment_id: paymentId, razorpay_signature: signature } = req.body;
+
+  if (!booking.razorpayOrderId || booking.razorpayOrderId !== orderId) {
+    throw new ExpressError(400, 'This payment does not belong to this booking.');
+  }
+  if (!paymentService.isValidSignature(orderId, paymentId, signature)) {
+    throw new ExpressError(400, 'Payment signature could not be verified.');
   }
 
-  // Only confirm if still pending (guards against paying twice in two tabs)
+  await paymentService.recordPayment({
+    booking, userId: req.session.user.id, ownerId: booking.zone.owner, orderId, paymentId,
+  });
+
+  // Only confirm if still pending (guards against a double submit)
   const confirmed = await Booking.findOneAndUpdate(
     { _id: booking._id, status: 'pending_payment' },
     { $set: { status: 'confirmed' }, $unset: { paymentExpiresAt: '' } }
@@ -40,5 +63,5 @@ exports.pay = async (req, res) => {
   if (!confirmed) throw new ExpressError(409, 'This booking was already updated.');
 
   req.flash('success', 'Payment successful. Your parking is confirmed.');
-  res.redirect(`/user/bookings/${booking._id}/receipt`);
+  res.json({ redirect: `/user/bookings/${booking._id}/receipt` });
 };

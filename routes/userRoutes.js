@@ -30,7 +30,8 @@ router.post('/zones/:id/book', driverOnly, validate(s.bookingSchema), wrapAsync(
 router.get('/bookings', driverOnly, wrapAsync(bookings.list));
 router.get('/bookings/:id', driverOnly, isBookingOwner, wrapAsync(bookings.show));
 router.get('/bookings/:id/pay', driverOnly, isBookingOwner, wrapAsync(payments.payPage));
-router.post('/bookings/:id/pay', driverOnly, isBookingOwner, validate(s.paymentSchema), wrapAsync(payments.pay));
+router.post('/bookings/:id/pay/order', driverOnly, isBookingOwner, wrapAsync(payments.createOrder));
+router.post('/bookings/:id/pay/verify', driverOnly, isBookingOwner, validate(s.razorpayVerifySchema), wrapAsync(payments.verify));
 router.get('/bookings/:id/receipt', driverOnly, isBookingOwner, wrapAsync(bookings.receipt));
 router.put('/bookings/:id/cancel', driverOnly, isBookingOwner, wrapAsync(bookings.cancel));
 

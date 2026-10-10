@@ -86,11 +86,15 @@ exports.cancel = async (req, res) => {
   if (!updated) throw new ExpressError(409, 'This booking was already changed.');
 
   if (booking.status === 'confirmed' && refund.amount > 0) {
-    const paid = await Transaction.findOne({ booking: booking._id, status: 'success' });
-    await paymentService.refund({
-      booking, userId: req.session.user.id, ownerId: booking.zone.owner,
-      amount: refund.amount, method: paid ? paid.method : 'wallet',
-    });
+    try {
+      await paymentService.refund({
+        booking, userId: req.session.user.id, ownerId: booking.zone.owner, amount: refund.amount,
+      });
+    } catch (e) {
+      console.error('Refund failed:', e.message);
+      req.flash('error', 'Booking cancelled, but the refund could not be processed automatically. Please contact the owner.');
+      return res.redirect(`/user/bookings/${booking._id}`);
+    }
   }
   req.flash('success', refund.amount > 0
     ? `Booking cancelled. ₹${refund.amount} will be refunded${refund.full ? ' in full' : ' (50%, late cancellation)'}.`

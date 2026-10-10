@@ -32,15 +32,19 @@ app.set('views', path.join(__dirname, 'views'));
 // ---- Middleware order matters (see build prompt, Section 7) ----
 app.use(
   helmet({
+    // Lets Razorpay's UPI / bank popups talk back to our page
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
-        'script-src': ["'self'", 'https://cdn.jsdelivr.net'],
+        'script-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://checkout.razorpay.com'],
+        'frame-src': ["'self'", 'https://api.razorpay.com', 'https://checkout.razorpay.com'],
+        'form-action': ["'self'", 'https://api.razorpay.com'],
         'style-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'],
         'font-src': ["'self'", 'data:', 'https://cdn.jsdelivr.net', 'https://fonts.gstatic.com'],
         // Zone photos are owner-supplied URLs from any https host
         'img-src': ["'self'", 'data:', 'https:'],
-        'connect-src': ["'self'"],
+        'connect-src': ["'self'", 'https://api.razorpay.com', 'https://lumberjack.razorpay.com', 'https://checkout.razorpay.com'],
         // Lets the app work over plain http on localhost
         'upgrade-insecure-requests': null,
       },
