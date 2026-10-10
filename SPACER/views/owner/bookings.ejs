@@ -1,0 +1,47 @@
+<% layout('/layouts/boilerplate') -%>
+<h1 class="h3 mb-3">Bookings</h1>
+<form action="/owner/bookings" method="GET" class="card card-body mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3"><label class="form-label small" for="zone">Zone</label>
+      <select class="form-select" id="zone" name="zone"><option value="">All zones</option>
+        <% zones.forEach(function (z) { %><option value="<%= z._id %>" <%= query.zone === String(z._id) ? 'selected' : '' %>><%= z.name %></option><% }) %>
+      </select></div>
+    <div class="col-md-3"><label class="form-label small" for="status">Status</label>
+      <select class="form-select" id="status" name="status"><option value="">Any status</option>
+        <% ['pending_payment','confirmed','checked_in','completed','cancelled','expired','no_show'].forEach(function (s) { %><option value="<%= s %>" <%= query.status === s ? 'selected' : '' %>><%= fmt.statusLabel(s) %></option><% }) %>
+      </select></div>
+    <div class="col-md-2"><label class="form-label small" for="from">From date</label><input type="date" class="form-control" id="from" name="from" value="<%= query.from || '' %>"></div>
+    <div class="col-md-2"><label class="form-label small" for="to">To date</label><input type="date" class="form-control" id="to" name="to" value="<%= query.to || '' %>"></div>
+    <div class="col-md-2 d-flex gap-2"><button class="btn btn-primary w-100" type="submit">Filter</button><a class="btn btn-outline-secondary" href="/owner/bookings" aria-label="Clear filters"><i class="bi bi-x-lg"></i></a></div>
+  </div>
+</form>
+
+<% if (!bookings.length) { %>
+  <div class="text-center text-muted py-5"><i class="bi bi-calendar2-x display-5"></i><p class="mt-2">No bookings match these filters.</p></div>
+<% } else { %>
+  <div class="card"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
+    <thead><tr><th>Zone / slot</th><th>Driver</th><th>Vehicle</th><th>When</th><th>Amount</th><th>Status</th><th class="text-end">Update</th></tr></thead>
+    <tbody>
+      <% bookings.forEach(function (b) { %>
+        <tr>
+          <td><%= b.zone ? b.zone.name : '' %><div class="small text-muted">Slot <%= b.slotLabel %></div></td>
+          <td><%= b.user ? b.user.name : '' %><div class="small text-muted"><%= b.user ? b.user.phone : '' %></div></td>
+          <td><%= b.vehiclePlate %></td>
+          <td><%= fmt.dateTime(b.startTime) %><div class="small text-muted">until <%= fmt.timeOnly(b.endTime) %></div></td>
+          <td><%= fmt.currency(b.totalAmount) %></td>
+          <td><span class="badge text-bg-<%= fmt.statusClass(b.status) %>"><%= fmt.statusLabel(b.status) %></span></td>
+          <td class="text-end">
+            <% const moves = b.status === 'confirmed' ? [['checked_in','Check in'],['no_show','No-show']] : b.status === 'checked_in' ? [['completed','Complete']] : []; %>
+            <% moves.forEach(function (m) { %>
+              <form class="d-inline" action="/owner/bookings/<%= b._id %>/status?_method=PUT" method="POST">
+                <input type="hidden" name="booking[status]" value="<%= m[0] %>">
+                <button class="btn btn-sm btn-outline-primary" type="submit"><%= m[1] %></button>
+              </form>
+            <% }) %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table></div></div>
+  <p class="small text-muted mt-2">Showing up to 200 most recent matches.</p>
+<% } %>

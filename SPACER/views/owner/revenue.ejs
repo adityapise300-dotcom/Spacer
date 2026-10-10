@@ -1,0 +1,43 @@
+<% layout('/layouts/boilerplate') -%>
+<%
+  const maxDay = Math.max(1, ...byDay.map(function (d) { return Math.abs(d.net); }));
+  const maxWeek = Math.max(1, ...byWeek.map(function (d) { return Math.abs(d.net); }));
+  const maxZone = Math.max(1, ...byZone.map(function (d) { return Math.abs(d.net); }));
+%>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Revenue</h1>
+  <form action="/owner/revenue" method="GET" class="d-flex gap-2">
+    <select class="form-select form-select-sm" name="range" aria-label="Time range">
+      <% [7,30,90].forEach(function (r) { %><option value="<%= r %>" <%= range === r ? 'selected' : '' %>>Last <%= r %> days</option><% }) %>
+    </select>
+    <button class="btn btn-primary btn-sm" type="submit">Apply</button>
+  </form>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="sp-kpi"><div class="sp-kpi-value"><%= fmt.currency(totals.net) %></div><div class="sp-kpi-label">Net revenue</div></div></div>
+  <div class="col-6 col-lg-3"><div class="sp-kpi"><div class="sp-kpi-value"><%= fmt.currency(totals.gross) %></div><div class="sp-kpi-label">Gross payments</div></div></div>
+  <div class="col-6 col-lg-3"><div class="sp-kpi"><div class="sp-kpi-value"><%= fmt.currency(totals.refunds) %></div><div class="sp-kpi-label">Refunded</div></div></div>
+  <div class="col-6 col-lg-3"><div class="sp-kpi"><div class="sp-kpi-value"><%= totals.count %></div><div class="sp-kpi-label">Paid bookings</div></div></div>
+</div>
+
+<% if (!totals.count) { %>
+  <div class="text-center text-muted py-5"><i class="bi bi-cash-coin display-5"></i><p class="mt-2">No payments in this period yet.</p></div>
+<% } else { %>
+<div class="row g-4">
+  <% [['By zone', byZone, maxZone, 'name'], ['By week', byWeek, maxWeek, '_id'], ['By day', byDay, maxDay, '_id']].forEach(function (sec) { %>
+    <div class="col-lg-<%= sec[0] === 'By day' ? 12 : 6 %>">
+      <h5><%= sec[0] %></h5>
+      <div class="card"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
+        <thead><tr><th><%= sec[0] === 'By zone' ? 'Zone' : sec[0] === 'By week' ? 'Week' : 'Date' %></th><th style="width: 40%"></th><th class="text-end">Bookings</th><th class="text-end">Net</th></tr></thead>
+        <tbody>
+          <% sec[1].forEach(function (r) { %>
+            <tr><td><%= r[sec[3]] %></td>
+              <td><div class="sp-bar-wrap"><div class="sp-bar" style="width: <%= Math.max(1, Math.round(Math.abs(r.net) / sec[2] * 100)) %>%"></div></div></td>
+              <td class="text-end"><%= r.count %></td><td class="text-end"><strong><%= fmt.currency(r.net) %></strong></td></tr>
+          <% }) %>
+        </tbody>
+      </table></div></div>
+    </div>
+  <% }) %>
+</div>
+<% } %>

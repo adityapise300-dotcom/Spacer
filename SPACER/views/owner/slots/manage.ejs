@@ -1,0 +1,30 @@
+<%# Included by zones/show.ejs. Expects: zone, slots %>
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h5 class="mb-0">Slots (<%= slots.length %>)</h5>
+  <a class="btn btn-primary btn-sm" href="/owner/zones/<%= zone._id %>/slots/new"><i class="bi bi-plus-lg"></i> Add slots</a>
+</div>
+<% if (!slots.length) { %>
+  <div class="card card-body text-muted">No slots yet. Add some so drivers can book this zone.</div>
+<% } else { %>
+  <div class="card"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
+    <thead><tr><th>Label</th><th>Type</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+    <tbody>
+      <% slots.forEach(function (s) { const nextStatus = s.status === 'available' ? 'maintenance' : 'available'; %>
+        <tr>
+          <td><strong><%= s.label %></strong> <% if (s.hasEVCharger) { %><i class="bi bi-lightning-charge-fill text-warning" title="EV charger"></i><% } %></td>
+          <td><i class="bi <%= fmt.vehicleIcon(s.vehicleType) %>"></i> <%= fmt.vehicleLabel(s.vehicleType) %></td>
+          <td><span class="badge text-bg-<%= s.status === 'available' ? 'success' : 'secondary' %>"><%= s.status === 'available' ? 'Available' : 'Maintenance' %></span></td>
+          <td class="text-end">
+            <form class="d-inline" action="/owner/zones/<%= zone._id %>/slots/<%= s._id %>?_method=PUT" method="POST">
+              <input type="hidden" name="slot[status]" value="<%= nextStatus %>">
+              <button class="btn btn-outline-secondary btn-sm" type="submit"><%= nextStatus === 'maintenance' ? 'Set maintenance' : 'Set available' %></button>
+            </form>
+            <form class="d-inline" action="/owner/zones/<%= zone._id %>/slots/<%= s._id %>?_method=DELETE" method="POST" data-confirm="Remove slot <%= s.label %>?">
+              <button class="btn btn-outline-danger btn-sm" type="submit" aria-label="Remove slot <%= s.label %>"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table></div></div>
+<% } %>

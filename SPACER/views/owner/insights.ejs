@@ -1,0 +1,73 @@
+<% layout('/layouts/boilerplate') -%>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div><h1 class="h3 mb-0">Demand insights</h1><div class="text-muted small">Forecast and price suggestions from your booking history</div></div>
+  <% if (zones.length) { %>
+  <form action="/owner/insights" method="GET" class="d-flex gap-2">
+    <select class="form-select form-select-sm" name="zone" aria-label="Zone">
+      <% zones.forEach(function (z) { %><option value="<%= z._id %>" <%= selected && String(selected._id) === String(z._id) ? 'selected' : '' %>><%= z.name %></option><% }) %>
+    </select>
+    <button class="btn btn-primary btn-sm" type="submit">Show</button>
+  </form>
+  <% } %>
+</div>
+
+<% if (!zones.length) { %>
+  <div class="text-center text-muted py-5"><i class="bi bi-graph-up display-5"></i><p class="mt-2">Add a zone first. Insights appear once it has booking history.</p><a class="btn btn-primary" href="/owner/zones/new">Add a zone</a></div>
+<% } else if (!report.hasData) { %>
+  <div class="text-center text-muted py-5"><i class="bi bi-graph-up display-5"></i><p class="mt-2">There is no booking history for <strong><%= selected.name %></strong> yet.<br>Insights need bookings to learn from. Developers can run <code>npm run simulate</code> to generate sample history.</p></div>
+<% } else { const m = report.metrics; %>
+  <div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="sp-kpi">
+      <div class="sp-kpi-value"><%= m.mae === null ? 'n/a' : m.mae.toFixed(1) + ' pts' %></div>
+      <div class="sp-kpi-label">Forecast error (MAE) vs baseline <strong><%= m.baselineMae === null ? 'n/a' : m.baselineMae.toFixed(1) + ' pts' %></strong></div>
+    </div></div>
+    <div class="col-md-4"><div class="sp-kpi">
+      <div class="sp-kpi-value"><%= m.mape === null ? 'n/a' : m.mape.toFixed(0) + '%' %></div>
+      <div class="sp-kpi-label">Forecast error (MAPE) vs baseline <strong><%= m.baselineMape === null ? 'n/a' : m.baselineMape.toFixed(0) + '%' %></strong></div>
+    </div></div>
+    <div class="col-md-4"><div class="sp-kpi">
+      <div class="sp-kpi-value"><%= m.improvementPct === null ? 'n/a' : (m.improvementPct >= 0 ? '' : '−') + Math.abs(m.improvementPct).toFixed(0) + '%' %></div>
+      <div class="sp-kpi-label"><%= m.improvementPct !== null && m.improvementPct < 0 ? 'worse than' : 'lower error than' %> "same hour yesterday" · <%= m.n %> hours tested · <%= report.historyDays %> days of history</div>
+    </div></div>
+  </div>
+
+  <div class="card mb-4"><div class="card-body">
+    <h5>Forecast vs actual occupancy, last 7 days</h5>
+    <div class="sp-chart-box"><canvas id="forecastChart" data-url="/owner/zones/<%= selected._id %>/forecast.json" aria-label="Line chart of forecast versus actual occupancy" role="img"></canvas></div>
+    <p class="small text-muted mt-2 mb-0">Each forecast point only uses bookings from at least a week earlier, so this is an honest test. "pts" means percentage points of occupancy. <% if (report.historyDays < 21) { %><strong>History is short, so treat results with care.</strong><% } %></p>
+  </div></div>
+
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <h5>Suggested price changes</h5>
+      <% if (!report.suggestions.length) { %>
+        <div class="card card-body text-muted">Demand looks steady. No price changes suggested right now.</div>
+      <% } else { report.suggestions.forEach(function (s) { %>
+        <div class="card mb-2"><div class="card-body py-2">
+          <i class="bi bi-<%= s.action === 'raise' ? 'arrow-up-circle-fill text-danger' : 'arrow-down-circle-fill text-success' %>"></i>
+          <strong><%= s.action === 'raise' ? 'Raise' : 'Lower' %> <%= s.day %> <%= s.from %> to <%= s.to %> by <%= s.pct %>%</strong>
+          <div class="small text-muted">Expected <%= s.avgOccupancy %>% full<%= s.action === 'raise' ? ', so demand can bear a higher base price.' : ', so a discount could attract more drivers.' %></div>
+        </div></div>
+      <% }) } %>
+      <p class="small text-muted">Suggestions apply to your base price. Live prices already adjust automatically within 0.8× to 2.0×.</p>
+    </div>
+    <div class="col-lg-7">
+      <h5>Predicted occupancy, next 7 days</h5>
+      <div class="card"><div class="card-body overflow-auto">
+        <table class="sp-heat">
+          <thead><tr><th></th><% for (let h = 0; h < 24; h++) { %><th><%= h %></th><% } %></tr></thead>
+          <tbody>
+            <% [1,2,3,4,5,6,0].forEach(function (d) { %>
+              <tr><th><%= fmt.DAYS[d] %></th>
+                <% for (let h = 0; h < 24; h++) { const p = report.profile[d][h]; %>
+                  <td title="<%= fmt.DAYS[d] %> <%= h %>:00 · <%= p === null ? 'no data' : Math.round(p * 100) + '% full' %>" style="opacity: <%= p === null ? 0.08 : (0.1 + 0.9 * p).toFixed(2) %>"></td>
+                <% } %>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+        <div class="small text-muted mt-2">Darker means busier. Hours run 0 to 23.</div>
+      </div></div>
+    </div>
+  </div>
+<% } %>

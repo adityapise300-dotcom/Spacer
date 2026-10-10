@@ -1,0 +1,41 @@
+<% layout('/layouts/boilerplate') -%>
+<h1 class="h3 mb-3">Hello, <%= currentUser.name.split(' ')[0] %></h1>
+
+<div class="card mb-4"><div class="card-body">
+  <h5 class="mb-3">Quick search</h5>
+  <form action="/user/search" method="GET" class="row g-2 align-items-end">
+    <div class="col-md-3"><label class="form-label small" for="q">Area or name</label><input class="form-control" id="q" name="q" placeholder="Koregaon Park"></div>
+    <div class="col-md-3"><label class="form-label small" for="start">From</label><input type="datetime-local" step="900" class="form-control" id="start" name="start" value="<%= defaults.start %>"></div>
+    <div class="col-md-3"><label class="form-label small" for="end">Until</label><input type="datetime-local" step="900" class="form-control" id="end" name="end" value="<%= defaults.end %>"></div>
+    <div class="col-md-2"><label class="form-label small" for="vehicleType">Vehicle</label>
+      <select class="form-select" id="vehicleType" name="vehicleType"><option value="">Any</option>
+        <% ['bike','car','suv','ev'].forEach(function (t) { %><option value="<%= t %>"><%= fmt.vehicleLabel(t) %></option><% }) %>
+      </select></div>
+    <div class="col-md-1"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-search"></i></button></div>
+  </form>
+</div></div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <h5>Upcoming</h5>
+    <% if (!upcoming.length) { %>
+      <div class="card"><div class="card-body text-muted">No upcoming bookings. <a href="/user/search">Find a spot</a>.</div></div>
+    <% } else { upcoming.forEach(function (b) { %>
+      <a class="card mb-2 text-decoration-none text-reset" href="/user/bookings/<%= b._id %>"><div class="card-body py-2">
+        <div class="d-flex justify-content-between"><strong><%= b.zone ? b.zone.name : 'Zone' %></strong><span class="badge text-bg-<%= fmt.statusClass(b.status) %>"><%= fmt.statusLabel(b.status) %></span></div>
+        <div class="small text-muted"><%= fmt.dateTime(b.startTime) %> to <%= fmt.timeOnly(b.endTime) %> · Slot <%= b.slotLabel %></div>
+      </div></a>
+    <% }) } %>
+  </div>
+  <div class="col-lg-6">
+    <h5>Recent activity</h5>
+    <% if (!recent.length) { %>
+      <div class="card"><div class="card-body text-muted">Nothing yet. Your bookings will show up here.</div></div>
+    <% } else { recent.forEach(function (b) { %>
+      <a class="card mb-2 text-decoration-none text-reset" href="/user/bookings/<%= b._id %>"><div class="card-body py-2">
+        <div class="d-flex justify-content-between"><strong><%= b.zone ? b.zone.name : 'Zone' %></strong><span><%= fmt.currency(b.totalAmount) %></span></div>
+        <div class="small text-muted"><%= fmt.dateTime(b.startTime) %> · <span class="text-<%= fmt.statusClass(b.status) %>"><%= fmt.statusLabel(b.status) %></span></div>
+      </div></a>
+    <% }) } %>
+  </div>
+</div>

@@ -1,0 +1,96 @@
+/* SPACER: one accent (parking-sign indigo), painted-bay motif for availability */
+:root {
+  --sp-accent: #2f3fbf;
+  --sp-accent-dark: #232f93;
+  --sp-accent-soft: #e8ebfb;
+  --sp-ink: #14182b;
+  --sp-muted: #5b6178;
+  --sp-bg: #f4f6fb;
+  --sp-asphalt: #232838;
+  --sp-line: #e1e5f0;
+  --sp-free: #1f9d55;
+  --sp-busy: #d64545;
+  --sp-maint: #8a90a3;
+  --sp-paint: #f5c400; /* road-marking yellow, used sparingly */
+  --bs-primary: var(--sp-accent);
+  --bs-primary-rgb: 47, 63, 191;
+  --bs-link-color: var(--sp-accent);
+  --bs-link-hover-color: var(--sp-accent-dark);
+  --bs-body-font-family: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --bs-body-color: var(--sp-ink);
+}
+
+body { background: var(--sp-bg); }
+h1, h2, h3, h4, h5, .navbar-brand, .sp-display { font-family: "Sora", "Public Sans", sans-serif; letter-spacing: -0.01em; }
+.sp-main { min-height: 70vh; }
+
+.btn-primary { --bs-btn-bg: var(--sp-accent); --bs-btn-border-color: var(--sp-accent); --bs-btn-hover-bg: var(--sp-accent-dark); --bs-btn-hover-border-color: var(--sp-accent-dark); --bs-btn-active-bg: var(--sp-accent-dark); --bs-btn-active-border-color: var(--sp-accent-dark); --bs-btn-disabled-bg: var(--sp-accent); --bs-btn-disabled-border-color: var(--sp-accent); }
+.btn-outline-primary { --bs-btn-color: var(--sp-accent); --bs-btn-border-color: var(--sp-accent); --bs-btn-hover-bg: var(--sp-accent); --bs-btn-hover-border-color: var(--sp-accent); --bs-btn-active-bg: var(--sp-accent-dark); }
+.form-control:focus, .form-select:focus, .btn:focus-visible, .form-check-input:focus { border-color: var(--sp-accent); box-shadow: 0 0 0 .2rem rgba(47, 63, 191, .2); }
+a:focus-visible { outline: 2px solid var(--sp-accent); outline-offset: 2px; }
+
+.card { border: 1px solid var(--sp-line); border-radius: .75rem; box-shadow: none; }
+.text-muted, .sp-muted { color: var(--sp-muted) !important; }
+
+/* Navbar */
+.sp-nav { background: var(--sp-ink); }
+.sp-nav .nav-link { color: #c9cde0; }
+.sp-nav .nav-link:hover, .sp-nav .nav-link.active { color: #fff; }
+.sp-logo { display: inline-grid; place-items: center; width: 1.7rem; height: 1.7rem; margin-right: .4rem; border-radius: .35rem; background: var(--sp-accent); color: #fff; font-weight: 700; font-size: 1rem; box-shadow: inset 0 0 0 2px #fff; }
+
+/* Hero */
+.sp-hero { background: var(--sp-ink); color: #fff; border-radius: 1rem; padding: 2.5rem 1.5rem; overflow: hidden; }
+.sp-hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.1; font-weight: 700; }
+.sp-hero p { color: #c9cde0; max-width: 34rem; }
+.btn-paint { background: var(--sp-paint); border-color: var(--sp-paint); color: var(--sp-ink); font-weight: 600; }
+.btn-paint:hover { background: #ffd633; border-color: #ffd633; color: var(--sp-ink); }
+
+/* The painted-bay map: the memorable element. Used on the home page and the booking page. */
+.sp-baymap { background: var(--sp-asphalt); border-radius: .75rem; padding: 1rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: .6rem; }
+.sp-baymap--hero { grid-template-columns: repeat(4, 1fr); max-width: 22rem; margin-inline: auto; }
+.bay { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .1rem; min-height: 4.4rem; padding: .4rem .2rem; border: 2px solid rgba(255, 255, 255, .85); border-top-width: 0; border-radius: 0 0 .35rem .35rem; color: #fff; font-size: .8rem; font-weight: 600; text-align: center; user-select: none; }
+.bay small { font-weight: 400; opacity: .85; font-size: .68rem; }
+.bay i { font-size: 1.05rem; }
+.bay--available { background: rgba(31, 157, 85, .28); border-color: #5fd68e; cursor: pointer; }
+.bay--booked { background: rgba(214, 69, 69, .38); border-color: #f08a8a; }
+.bay--maintenance { background: repeating-linear-gradient(135deg, rgba(138, 144, 163, .28) 0 6px, rgba(138, 144, 163, .1) 6px 12px); border-color: #8a90a3; color: #c4c8d6; }
+.bay-input { position: absolute; opacity: 0; pointer-events: none; }
+.bay-input:checked + .bay--available { background: var(--sp-free); border-color: #fff; box-shadow: 0 0 0 3px var(--sp-paint); }
+.bay-input:focus-visible + .bay--available { outline: 2px solid var(--sp-paint); outline-offset: 2px; }
+.bay--available:hover { background: rgba(31, 157, 85, .5); }
+.sp-legend span { display: inline-flex; align-items: center; gap: .35rem; margin-right: 1rem; font-size: .85rem; }
+.sp-legend i { width: .8rem; height: .8rem; border-radius: .2rem; display: inline-block; }
+
+/* Steps */
+.sp-step { height: 100%; padding: 1.25rem; background: #fff; border: 1px solid var(--sp-line); border-radius: .75rem; }
+.sp-step-no { display: inline-grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: var(--sp-accent-soft); color: var(--sp-accent); font-weight: 700; margin-bottom: .6rem; }
+
+/* Zone cards */
+.sp-zone-img { width: 100%; height: 150px; object-fit: cover; border-radius: .75rem .75rem 0 0; background: var(--sp-accent-soft); }
+.sp-zone-img--empty { display: grid; place-items: center; color: var(--sp-accent); font-size: 2.6rem; }
+.sp-price { font-family: "Sora", sans-serif; font-weight: 700; color: var(--sp-accent); }
+
+/* KPI */
+.sp-kpi { background: #fff; border: 1px solid var(--sp-line); border-radius: .75rem; padding: 1rem 1.1rem; height: 100%; }
+.sp-kpi .sp-kpi-value { font-family: "Sora", sans-serif; font-size: 1.7rem; font-weight: 700; }
+.sp-kpi .sp-kpi-label { color: var(--sp-muted); font-size: .85rem; }
+
+/* Price breakdown + heatmap + bars */
+.sp-breakdown td { padding: .35rem .25rem; }
+.sp-heat { font-size: .68rem; border-collapse: separate; border-spacing: 2px; min-width: 760px; }
+.sp-heat th { font-weight: 500; color: var(--sp-muted); text-align: center; }
+.sp-heat td { width: 3.1%; height: 1.5rem; border-radius: 3px; background: var(--sp-accent); }
+.sp-bar { height: .55rem; border-radius: 1rem; background: var(--sp-accent); min-width: 2px; }
+.sp-bar-wrap { background: var(--sp-accent-soft); border-radius: 1rem; }
+.sp-chart-box { position: relative; height: 320px; }
+.sp-countdown { font-variant-numeric: tabular-nums; }
+
+footer.sp-footer { background: var(--sp-ink); color: #aab0c8; }
+footer.sp-footer a { color: #dfe3f5; }
+
+@media print {
+  .sp-nav, .sp-footer, .no-print, .alert { display: none !important; }
+  body { background: #fff; }
+  .card { border: 1px solid #999; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

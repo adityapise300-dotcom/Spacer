@@ -1,0 +1,24 @@
+<% layout('/layouts/boilerplate') -%>
+<div class="row justify-content-center"><div class="col-lg-6">
+  <div class="card"><div class="card-body p-4">
+    <h1 class="h4">Complete your payment</h1>
+    <div class="alert alert-warning py-2">Slot held for <strong class="sp-countdown" data-countdown="<%= booking.paymentExpiresAt.toISOString() %>"></strong>. After that it is released.</div>
+    <p class="mb-1"><strong><%= booking.zone.name %></strong> · Slot <%= booking.slotLabel %></p>
+    <p class="text-muted small"><%= fmt.dateTime(booking.startTime) %> to <%= fmt.timeOnly(booking.endTime) %> (<%= booking.durationHours %> h)</p>
+    <div class="d-flex justify-content-between border-top border-bottom py-2 mb-3"><span>Total</span><strong class="sp-price fs-4"><%= fmt.currency(booking.totalAmount) %></strong></div>
+
+    <form action="/user/bookings/<%= booking._id %>/pay" method="POST" class="needs-validation" novalidate>
+      <p class="mb-2 fw-semibold">Payment method</p>
+      <div class="mb-3">
+        <% [['upi','UPI','phone'],['card','Credit or debit card','credit-card'],['wallet','Wallet','wallet2']].forEach(function (m, i) { %>
+          <div class="form-check mb-1">
+            <input class="form-check-input" type="radio" name="payment[method]" id="m-<%= m[0] %>" value="<%= m[0] %>" <%= i === 0 ? 'checked' : '' %> required>
+            <label class="form-check-label" for="m-<%= m[0] %>"><i class="bi bi-<%= m[2] %>"></i> <%= m[1] %></label>
+          </div>
+        <% }) %>
+      </div>
+      <button class="btn btn-primary w-100" type="submit" data-loading-text="Processing payment...">Pay <%= fmt.currency(booking.totalAmount) %></button>
+    </form>
+    <p class="small text-muted mt-3 mb-0"><i class="bi bi-shield-check"></i> Demo mode: this is a mock gateway. No real money moves, and about 1 in 10 payments fails on purpose so you can test retries.</p>
+  </div></div>
+</div></div>

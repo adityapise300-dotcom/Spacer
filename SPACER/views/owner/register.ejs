@@ -1,0 +1,44 @@
+<% layout('/layouts/boilerplate') -%>
+<div class="row justify-content-center"><div class="col-md-8 col-lg-6">
+  <div class="card"><div class="card-body p-4">
+    <h2 class="mb-1">Create an owner account</h2>
+    <p class="text-muted">List your parking space and start earning.</p>
+    <form action="/owner/register" method="POST" class="needs-validation" novalidate>
+      <div class="mb-3">
+        <label for="name" class="form-label">Full name</label>
+        <input type="text" class="form-control" id="name" name="owner[name]" minlength="2" maxlength="80" required>
+        <div class="invalid-feedback">Please enter your name.</div>
+      </div>
+      <div class="mb-3">
+        <label for="businessName" class="form-label">Business or property name</label>
+        <input type="text" class="form-control" id="businessName" name="owner[businessName]" minlength="2" maxlength="120" required>
+        <div class="invalid-feedback">Please enter a business or property name.</div>
+      </div>
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" name="owner[email]" required>
+        <div class="invalid-feedback">Enter a valid email address.</div>
+      </div>
+      <div class="mb-3">
+        <label for="phone" class="form-label">Mobile number</label>
+        <input type="tel" class="form-control" id="phone" name="owner[phone]" pattern="(\+91)?[6-9][0-9]{9}" placeholder="9876543210" required>
+        <div class="invalid-feedback">Enter a 10-digit Indian mobile number.</div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" class="form-control" id="password" name="owner[password]" minlength="8" maxlength="72" pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}" required>
+          <div class="form-text">8+ characters, with a letter and a number.</div>
+          <div class="invalid-feedback">Use 8+ characters with a letter and a number.</div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="confirmPassword" class="form-label">Confirm password</label>
+          <input type="password" class="form-control" id="confirmPassword" name="owner[confirmPassword]" data-match="#password" required>
+          <div class="invalid-feedback">Passwords must match.</div>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary w-100" data-loading-text="Creating account...">Create account</button>
+    </form>
+    <p class="text-center small mt-3 mb-0">Already registered? <a href="/owner/login">Log in</a></p>
+  </div></div>
+</div></div>

@@ -1,0 +1,58 @@
+<% layout('/layouts/boilerplate') -%>
+<section class="sp-hero mb-5">
+  <div class="row align-items-center g-4">
+    <div class="col-lg-7">
+      <h1 class="mb-3">Smarter Parking, Happier Cities.</h1>
+      <p class="fs-5 mb-4">Drivers book a guaranteed bay before they leave home. Owners turn idle space into steady income. Prices follow real demand, and every price is explained.</p>
+      <a href="/user/register" class="btn btn-paint btn-lg me-2 mb-2">Find parking</a>
+      <a href="/owner/register" class="btn btn-outline-light btn-lg mb-2">List your space</a>
+    </div>
+    <div class="col-lg-5">
+      <div class="sp-baymap sp-baymap--hero" aria-hidden="true">
+        <% ['A-01:booked','A-02:available','A-03:booked','A-04:available','B-01:available','B-02:booked','B-03:maintenance','B-04:available','C-01:booked','C-02:booked','C-03:available','C-04:available'].forEach(function (s) { const p = s.split(':'); %>
+          <div class="bay bay--<%= p[1] %>"><i class="bi bi-<%= p[1] === 'booked' ? 'car-front-fill' : p[1] === 'maintenance' ? 'cone-striped' : 'p-circle' %>"></i><%= p[0] %></div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="mb-5">
+  <h2 class="mb-3">How it works</h2>
+  <div class="row g-3">
+    <% [['Register','Create a free driver or owner account.','person-plus'],['Search','Pick a place and time. See live free bays.','search'],['Book','Choose a bay. It is held for you for 10 minutes.','calendar-check'],['Pay','Pay securely and get a receipt.','credit-card']].forEach(function (s, i) { %>
+      <div class="col-6 col-lg-3">
+        <div class="sp-step">
+          <div class="sp-step-no"><%= i + 1 %></div>
+          <h5><i class="bi bi-<%= s[2] %> me-1"></i><%= s[0] %></h5>
+          <p class="text-muted mb-0 small"><%= s[1] %></p>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</section>
+
+<section class="row g-3 mb-5">
+  <div class="col-md-6">
+    <div class="card h-100"><div class="card-body p-4">
+      <h3>For drivers</h3>
+      <ul class="text-muted ps-3">
+        <li>No more circling the block. Your bay is waiting.</li>
+        <li>See exactly why a price is what it is.</li>
+        <li>Free cancellation up to 2 hours before you arrive.</li>
+      </ul>
+      <a href="/user/register" class="btn btn-primary">Sign up as a driver</a>
+    </div></div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100"><div class="card-body p-4">
+      <h3>For owners</h3>
+      <ul class="text-muted ps-3">
+        <li>List a zone and add slots in minutes.</li>
+        <li>Track bookings and revenue in one place.</li>
+        <li>Get a demand forecast and price suggestions for every hour.</li>
+      </ul>
+      <a href="/owner/register" class="btn btn-primary">Sign up as an owner</a>
+    </div></div>
+  </div>
+</section>

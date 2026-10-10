@@ -1,0 +1,44 @@
+<%# Shared by new.ejs and edit.ejs. Expects: zone (null for new), action, method %>
+<% const z = zone || { vehicleTypesAllowed: ['car'], amenities: [], openTime: '06:00', closeTime: '23:00', city: 'Pune', category: 'other', isActive: true, location: { coordinates: [73.8567, 18.5204] }, images: [] }; %>
+<form action="<%= action %>" method="POST" class="needs-validation" novalidate>
+  <div class="row">
+    <div class="col-md-8 mb-3"><label class="form-label" for="name">Zone name</label><input class="form-control" id="name" name="zone[name]" value="<%= z.name || '' %>" minlength="3" maxlength="120" required><div class="invalid-feedback">Give the zone a name (3+ characters).</div></div>
+    <div class="col-md-4 mb-3"><label class="form-label" for="category">Area type</label>
+      <select class="form-select" id="category" name="zone[category]">
+        <% ['office','mall','market','transit','residential','other'].forEach(function (c) { %><option value="<%= c %>" <%= z.category === c ? 'selected' : '' %>><%= c.charAt(0).toUpperCase() + c.slice(1) %></option><% }) %>
+      </select></div>
+  </div>
+  <div class="mb-3"><label class="form-label" for="description">Description</label><textarea class="form-control" id="description" name="zone[description]" rows="2" maxlength="1000"><%= z.description || '' %></textarea></div>
+  <div class="row">
+    <div class="col-md-8 mb-3"><label class="form-label" for="address">Address</label><input class="form-control" id="address" name="zone[address]" value="<%= z.address || '' %>" minlength="5" maxlength="250" required><div class="invalid-feedback">Enter the street address.</div></div>
+    <div class="col-md-4 mb-3"><label class="form-label" for="city">City</label><input class="form-control" id="city" name="zone[city]" value="<%= z.city %>" required></div>
+  </div>
+  <div class="row">
+    <div class="col-md-6 mb-3"><label class="form-label" for="lat">Latitude</label><input type="number" step="any" min="-90" max="90" class="form-control" id="lat" name="zone[lat]" value="<%= z.location.coordinates[1] %>" required></div>
+    <div class="col-md-6 mb-3"><label class="form-label" for="lng">Longitude</label><input type="number" step="any" min="-180" max="180" class="form-control" id="lng" name="zone[lng]" value="<%= z.location.coordinates[0] %>" required></div>
+    <div class="form-text mt-0 mb-3">Tip: right-click your location in Google Maps and click the coordinates to copy them.</div>
+  </div>
+  <div class="mb-3">
+    <label class="form-label d-block">Vehicle types allowed</label>
+    <% ['bike','car','suv','ev'].forEach(function (t) { %>
+      <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="vt-<%= t %>" name="zone[vehicleTypesAllowed]" value="<%= t %>" <%= z.vehicleTypesAllowed.includes(t) ? 'checked' : '' %>><label class="form-check-label" for="vt-<%= t %>"><%= fmt.vehicleLabel(t) %></label></div>
+    <% }) %>
+  </div>
+  <div class="row">
+    <div class="col-md-4 mb-3"><label class="form-label" for="basePricePerHour">Base price (₹ per hour)</label><input type="number" min="5" max="5000" step="1" class="form-control" id="basePricePerHour" name="zone[basePricePerHour]" value="<%= z.basePricePerHour || '' %>" required><div class="invalid-feedback">Enter a price between ₹5 and ₹5000.</div></div>
+    <div class="col-md-4 mb-3"><label class="form-label" for="openTime">Opens</label><input type="time" class="form-control" id="openTime" name="zone[openTime]" value="<%= z.openTime %>" required></div>
+    <div class="col-md-4 mb-3"><label class="form-label" for="closeTime">Closes</label><input type="time" class="form-control" id="closeTime" name="zone[closeTime]" value="<%= z.closeTime %>" required><div class="form-text">Use 00:00 for midnight.</div></div>
+  </div>
+  <div class="mb-3">
+    <label class="form-label d-block">Amenities</label>
+    <% ['CCTV','Covered','EV charging','Security'].forEach(function (a, i) { %>
+      <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="am-<%= i %>" name="zone[amenities]" value="<%= a %>" <%= z.amenities.includes(a) ? 'checked' : '' %>><label class="form-check-label" for="am-<%= i %>"><%= a %></label></div>
+    <% }) %>
+  </div>
+  <div class="mb-3"><label class="form-label" for="imagesText">Image links (one per line, optional)</label>
+    <textarea class="form-control" id="imagesText" name="zone[imagesText]" rows="3" placeholder="https://example.com/photo1.jpg"><%= (z.images || []).join('\n') %></textarea>
+    <div class="form-text">Paste public https links. You can leave this empty and add photos later.</div></div>
+  <div class="form-check form-switch mb-4"><input class="form-check-input" type="checkbox" role="switch" id="isActive" name="zone[isActive]" <%= z.isActive ? 'checked' : '' %>><label class="form-check-label" for="isActive">Visible to drivers</label></div>
+  <button class="btn btn-primary" type="submit" data-loading-text="Saving..."><%= submitLabel %></button>
+  <a href="/owner/zones<%= zone ? '/' + zone._id : '' %>" class="btn btn-outline-secondary">Cancel</a>
+</form>

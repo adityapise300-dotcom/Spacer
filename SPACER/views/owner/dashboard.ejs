@@ -1,0 +1,39 @@
+<% layout('/layouts/boilerplate') -%>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Owner dashboard</h1>
+  <a href="/owner/zones/new" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Add zone</a>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="sp-kpi"><div class="sp-kpi-value"><%= fmt.currency(kpis.todayRevenue) %></div><div class="sp-kpi-label">Today's revenue (net of refunds)</div></div></div>
+  <div class="col-6 col-lg-3"><div class="sp-kpi"><div class="sp-kpi-value"><%= kpis.occupancy %>%</div><div class="sp-kpi-label">Occupancy right now</div></div></div>
+  <div class="col-6 col-lg-3"><div class="sp-kpi"><div class="sp-kpi-value"><%= kpis.activeNow %></div><div class="sp-kpi-label">Active bookings</div></div></div>
+  <div class="col-6 col-lg-3"><div class="sp-kpi"><div class="sp-kpi-value"><%= kpis.upcoming %></div><div class="sp-kpi-label">Upcoming bookings</div></div></div>
+</div>
+
+<% if (!zoneRows.length) { %>
+  <div class="text-center text-muted py-5"><i class="bi bi-p-square display-5"></i><p class="mt-2">You have no zones yet. <a href="/owner/zones/new">Add your first zone</a> to start taking bookings.</p></div>
+<% } else { %>
+<div class="row g-4">
+  <div class="col-lg-5">
+    <h5>Zones right now</h5>
+    <% zoneRows.forEach(function (r) { const pct = r.total ? Math.round(r.busy / r.total * 100) : 0; %>
+      <a href="/owner/zones/<%= r.zone._id %>" class="card mb-2 text-decoration-none text-reset"><div class="card-body py-2">
+        <div class="d-flex justify-content-between"><strong><%= r.zone.name %></strong><span class="small text-muted"><%= r.busy %> / <%= r.total %> bays</span></div>
+        <div class="sp-bar-wrap mt-1"><div class="sp-bar" style="width: <%= pct %>%"></div></div>
+      </div></a>
+    <% }) %>
+  </div>
+  <div class="col-lg-7">
+    <h5>Latest bookings</h5>
+    <% if (!recent.length) { %><p class="text-muted">No bookings yet.</p><% } else { %>
+      <div class="card"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
+        <thead><tr><th>Zone</th><th>Driver</th><th>When</th><th>Status</th></tr></thead>
+        <tbody>
+          <% recent.forEach(function (b) { %>
+            <tr><td><%= b.zone ? b.zone.name : '' %></td><td><%= b.user ? b.user.name : '' %></td><td><%= fmt.dateTime(b.startTime) %></td><td><span class="badge text-bg-<%= fmt.statusClass(b.status) %>"><%= fmt.statusLabel(b.status) %></span></td></tr>
+          <% }) %>
+        </tbody></table></div></div>
+    <% } %>
+  </div>
+</div>
+<% } %>

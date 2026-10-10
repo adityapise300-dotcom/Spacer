@@ -1,0 +1,26 @@
+<% layout('/layouts/boilerplate') -%>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">My bookings</h1>
+  <a href="/user/search" class="btn btn-primary btn-sm">New booking</a>
+</div>
+<% if (!bookings.length) { %>
+  <div class="text-center text-muted py-5"><i class="bi bi-calendar2-x display-5"></i><p class="mt-2">No bookings yet. <a href="/user/search">Find parking</a> to make your first one.</p></div>
+<% } else { %>
+  <div class="card"><div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Zone</th><th>When</th><th>Slot</th><th>Total</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        <% bookings.forEach(function (b) { %>
+          <tr>
+            <td><%= b.zone ? b.zone.name : 'Zone' %></td>
+            <td><%= fmt.dateTime(b.startTime) %><div class="small text-muted">until <%= fmt.timeOnly(b.endTime) %></div></td>
+            <td><%= b.slotLabel %></td>
+            <td><%= fmt.currency(b.totalAmount) %></td>
+            <td><span class="badge text-bg-<%= fmt.statusClass(b.status) %>"><%= fmt.statusLabel(b.status) %></span></td>
+            <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/user/bookings/<%= b._id %>">Details</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div></div>
+<% } %>

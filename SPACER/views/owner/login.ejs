@@ -1,0 +1,22 @@
+<% layout('/layouts/boilerplate') -%>
+<div class="row justify-content-center"><div class="col-md-7 col-lg-5">
+  <div class="card"><div class="card-body p-4">
+    <h2 class="mb-1">Owner login</h2>
+    <p class="text-muted">Log in to manage your zones.</p>
+    <form action="/owner/login" method="POST" class="needs-validation" novalidate>
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" name="login[email]" autocomplete="email" required>
+        <div class="invalid-feedback">Enter your email address.</div>
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" class="form-control" id="password" name="login[password]" autocomplete="current-password" required>
+        <div class="invalid-feedback">Enter your password.</div>
+      </div>
+      <button type="submit" class="btn btn-primary w-100" data-loading-text="Logging in...">Log in</button>
+    </form>
+    <p class="text-center small mt-3 mb-1">New here? <a href="/owner/register">Create an account</a></p>
+    <p class="text-center small text-muted mb-0">Looking for parking? <a href="/user/login">Driver login</a></p>
+  </div></div>
+</div></div>

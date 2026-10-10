@@ -1,0 +1,52 @@
+<% const path = locals.currentPath || ''; const role = currentUser ? currentUser.role : null; %>
+<nav class="navbar navbar-expand-lg navbar-dark sp-nav">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="/"><span class="sp-logo">P</span>SPACER</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav me-auto">
+        <% if (role === 'user') { %>
+          <li class="nav-item"><a class="nav-link <%= path.startsWith('/user/search') || path.startsWith('/user/zones') ? 'active' : '' %>" href="/user/search">Search</a></li>
+          <li class="nav-item"><a class="nav-link <%= path.startsWith('/user/bookings') ? 'active' : '' %>" href="/user/bookings">My bookings</a></li>
+          <li class="nav-item"><a class="nav-link <%= path.startsWith('/user/profile') ? 'active' : '' %>" href="/user/profile">Profile</a></li>
+        <% } else if (role === 'owner') { %>
+          <li class="nav-item"><a class="nav-link <%= path === '/owner/dashboard' ? 'active' : '' %>" href="/owner/dashboard">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link <%= path.startsWith('/owner/zones') ? 'active' : '' %>" href="/owner/zones">My zones</a></li>
+          <li class="nav-item"><a class="nav-link <%= path.startsWith('/owner/bookings') ? 'active' : '' %>" href="/owner/bookings">Bookings</a></li>
+          <li class="nav-item"><a class="nav-link <%= path.startsWith('/owner/revenue') ? 'active' : '' %>" href="/owner/revenue">Revenue</a></li>
+          <li class="nav-item"><a class="nav-link <%= path.startsWith('/owner/insights') ? 'active' : '' %>" href="/owner/insights">Insights</a></li>
+        <% } else { %>
+          <li class="nav-item"><a class="nav-link <%= path === '/' ? 'active' : '' %>" href="/">Home</a></li>
+          <li class="nav-item"><a class="nav-link <%= path === '/about' ? 'active' : '' %>" href="/about">About</a></li>
+        <% } %>
+      </ul>
+      <ul class="navbar-nav align-items-lg-center gap-lg-2">
+        <% if (currentUser) { %>
+          <li class="nav-item"><span class="navbar-text me-lg-2"><i class="bi bi-person-circle"></i> <%= currentUser.name %></span></li>
+          <li class="nav-item">
+            <form action="/<%= role %>/logout" method="POST" class="d-inline">
+              <button class="btn btn-sm btn-outline-light" type="submit">Log out</button>
+            </form>
+          </li>
+        <% } else { %>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Log in</a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="/user/login">As a driver</a></li>
+              <li><a class="dropdown-item" href="/owner/login">As an owner</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="btn btn-sm btn-paint dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Sign up</a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="/user/register">As a driver</a></li>
+              <li><a class="dropdown-item" href="/owner/register">As an owner</a></li>
+            </ul>
+          </li>
+        <% } %>
+      </ul>
+    </div>
+  </div>
+</nav>

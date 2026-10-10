@@ -1,0 +1,59 @@
+<% layout('/layouts/boilerplate') -%>
+<a href="/user/bookings" class="small text-decoration-none">&larr; All bookings</a>
+<div class="row g-4 mt-1">
+  <div class="col-lg-7">
+    <div class="card"><div class="card-body">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <h1 class="h4 mb-1"><%= booking.zone.name %></h1>
+          <div class="text-muted small"><i class="bi bi-geo-alt"></i> <%= booking.zone.address %></div>
+        </div>
+        <span class="badge fs-6 text-bg-<%= fmt.statusClass(booking.status) %>"><%= fmt.statusLabel(booking.status) %></span>
+      </div>
+      <dl class="row mb-0 mt-3">
+        <dt class="col-sm-4">Slot</dt><dd class="col-sm-8"><%= booking.slotLabel %> (<%= fmt.vehicleLabel(booking.vehicleType) %>)</dd>
+        <dt class="col-sm-4">Vehicle</dt><dd class="col-sm-8"><%= booking.vehiclePlate %></dd>
+        <dt class="col-sm-4">From</dt><dd class="col-sm-8"><%= fmt.dateTime(booking.startTime) %></dd>
+        <dt class="col-sm-4">Until</dt><dd class="col-sm-8"><%= fmt.dateTime(booking.endTime) %></dd>
+        <dt class="col-sm-4">Duration</dt><dd class="col-sm-8"><%= booking.durationHours %> h</dd>
+        <dt class="col-sm-4">Total</dt><dd class="col-sm-8"><strong><%= fmt.currency(booking.totalAmount) %></strong> (avg <%= fmt.currency(booking.pricePerHourApplied) %>/h, locked at booking)</dd>
+        <% if (booking.refundAmount > 0) { %><dt class="col-sm-4">Refund</dt><dd class="col-sm-8"><%= fmt.currency(booking.refundAmount) %></dd><% } %>
+      </dl>
+    </div></div>
+
+    <% if (booking.priceBreakdown && booking.priceBreakdown.lines) { %>
+    <div class="card mt-3"><div class="card-body">
+      <h5>How this price was set</h5>
+      <table class="table table-sm sp-breakdown mb-0"><tbody>
+        <% booking.priceBreakdown.lines.forEach(function (l) { %>
+          <tr><td><strong><%= l.label %></strong><div class="small text-muted"><%= l.note %></div></td><td class="text-end"><%= l.multiplier === null ? fmt.currency(booking.priceBreakdown.basePricePerHour) : '×' + Number(l.multiplier).toFixed(2) %></td></tr>
+        <% }) %>
+      </tbody></table>
+    </div></div>
+    <% } %>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card"><div class="card-body">
+      <h5>Actions</h5>
+      <% if (booking.status === 'pending_payment') { %>
+        <p class="small">Hold ends in <strong class="sp-countdown" data-countdown="<%= booking.paymentExpiresAt.toISOString() %>"></strong></p>
+        <a class="btn btn-primary w-100 mb-2" href="/user/bookings/<%= booking._id %>/pay">Pay <%= fmt.currency(booking.totalAmount) %></a>
+      <% } %>
+      <% if (['confirmed', 'checked_in', 'completed'].includes(booking.status) || booking.refundAmount > 0) { %>
+        <a class="btn btn-outline-primary w-100 mb-2" href="/user/bookings/<%= booking._id %>/receipt">View receipt</a>
+      <% } %>
+      <% if (refund.allowed) { %>
+        <form action="/user/bookings/<%= booking._id %>/cancel?_method=PUT" method="POST"
+              data-confirm="<%= booking.status === 'confirmed' ? 'Cancel this booking? You will be refunded ' + fmt.currency(refund.amount) + '.' : 'Cancel this booking?' %>">
+          <button class="btn btn-outline-danger w-100" type="submit">Cancel booking</button>
+        </form>
+        <% if (booking.status === 'confirmed') { %>
+          <p class="small text-muted mt-2 mb-0"><%= refund.full ? 'Free cancellation: full refund of ' + fmt.currency(refund.amount) + '.' : 'Less than 2 hours to start: 50% refund (' + fmt.currency(refund.amount) + ').' %></p>
+        <% } %>
+      <% } else if (booking.status === 'expired') { %>
+        <p class="text-muted mb-0">The payment hold ran out and the slot was released. <a href="/user/zones/<%= booking.zone._id %>">Book again</a>.</p>
+      <% } %>
+    </div></div>
+  </div>
+</div>

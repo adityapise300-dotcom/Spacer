@@ -1,0 +1,39 @@
+<%# Expects: info = { zone, distanceKm?, free?, quote?, unavailableReason? }, detailQuery (string) %>
+<% const z = info.zone; %>
+<div class="card h-100">
+  <% if (z.images && z.images[0]) { %>
+    <img src="<%= z.images[0] %>" class="sp-zone-img" alt="<%= z.name %>" loading="lazy">
+  <% } else { %>
+    <div class="sp-zone-img sp-zone-img--empty" aria-hidden="true"><i class="bi bi-p-square-fill"></i></div>
+  <% } %>
+  <div class="card-body d-flex flex-column">
+    <h5 class="card-title mb-1"><%= z.name %></h5>
+    <p class="text-muted small mb-2"><i class="bi bi-geo-alt"></i> <%= z.address %><% if (info.distanceKm !== undefined) { %> · <%= info.distanceKm.toFixed(1) %> km away<% } %></p>
+    <div class="mb-2">
+      <% z.vehicleTypesAllowed.forEach(function (t) { %>
+        <span class="badge text-bg-light border"><i class="bi <%= fmt.vehicleIcon(t) %>"></i> <%= fmt.vehicleLabel(t) %></span>
+      <% }) %>
+    </div>
+    <p class="small text-muted mb-2">
+      <i class="bi bi-clock"></i> <%= z.openTime %> to <%= z.closeTime %>
+      <% if (z.amenities && z.amenities.length) { %> · <%= z.amenities.join(', ') %><% } %>
+    </p>
+    <div class="mt-auto">
+      <% if (info.quote) { %>
+        <div><span class="sp-price fs-5"><%= fmt.currency(info.quote.total) %></span> <span class="small text-muted">for <%= info.quote.hours %> h (avg <%= fmt.currency(info.quote.pricePerHour) %>/h)</span></div>
+      <% } else { %>
+        <div><span class="small text-muted">from</span> <span class="sp-price fs-5"><%= fmt.currency(z.basePricePerHour) %></span><span class="small text-muted">/hour</span></div>
+      <% } %>
+      <% if (info.free !== undefined) { %>
+        <% if (info.unavailableReason) { %>
+          <div class="small text-danger mb-2"><%= info.unavailableReason %></div>
+        <% } else if (info.free === 0) { %>
+          <div class="small text-danger mb-2"><i class="bi bi-x-circle"></i> Full for this time</div>
+        <% } else { %>
+          <div class="small text-success mb-2"><i class="bi bi-check-circle"></i> <%= info.free %> slot<%= info.free > 1 ? 's' : '' %> free</div>
+        <% } %>
+      <% } %>
+      <a class="btn btn-primary btn-sm w-100 mt-2" href="/user/zones/<%= z._id %><%= detailQuery ? '?' + detailQuery : '' %>">View and book</a>
+    </div>
+  </div>
+</div>

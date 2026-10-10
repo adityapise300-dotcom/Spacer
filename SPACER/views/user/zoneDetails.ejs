@@ -1,0 +1,122 @@
+<% layout('/layouts/boilerplate') -%>
+<%
+  const startVal = start ? fmt.toInputValue(start) : '';
+  const endVal = end ? fmt.toInputValue(end) : '';
+  const freeCount = statuses ? statuses.filter(function (s) { return s.state === 'available'; }).length : 0;
+%>
+<a href="/user/search" class="small text-decoration-none">&larr; Back to search</a>
+<div class="row g-4 mt-1">
+  <div class="col-lg-7">
+    <% if (zone.images && zone.images.length) { %>
+      <img src="<%= zone.images[0] %>" alt="<%= zone.name %>" class="img-fluid rounded mb-2 w-100" style="max-height: 320px; object-fit: cover;">
+      <% if (zone.images.length > 1) { %><div class="d-flex gap-2 mb-2">
+        <% zone.images.slice(1, 5).forEach(function (u) { %><img src="<%= u %>" alt="" class="rounded" style="height: 70px; width: 100px; object-fit: cover;" loading="lazy"><% }) %>
+      </div><% } %>
+    <% } %>
+    <h1 class="h3 mb-1"><%= zone.name %></h1>
+    <p class="text-muted mb-2"><i class="bi bi-geo-alt"></i> <%= zone.address %>, <%= zone.city %>
+      · <a href="https://www.google.com/maps?q=<%= zone.location.coordinates[1] %>,<%= zone.location.coordinates[0] %>" target="_blank" rel="noopener">Open in Maps</a></p>
+    <% if (zone.description) { %><p><%= zone.description %></p><% } %>
+    <p class="small mb-1"><i class="bi bi-clock"></i> Open <%= zone.openTime %> to <%= zone.closeTime %> · base rate <strong><%= fmt.currency(zone.basePricePerHour) %>/h</strong></p>
+    <p class="small mb-0">
+      <% zone.vehicleTypesAllowed.forEach(function (t) { %><span class="badge text-bg-light border"><i class="bi <%= fmt.vehicleIcon(t) %>"></i> <%= fmt.vehicleLabel(t) %></span> <% }) %>
+      <% (zone.amenities || []).forEach(function (a) { %><span class="badge text-bg-secondary"><%= a %></span> <% }) %>
+    </p>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card"><div class="card-body">
+      <h5 class="mb-3">Check availability</h5>
+      <form action="/user/zones/<%= zone._id %>" method="GET" class="row g-2">
+        <div class="col-12"><label class="form-label small" for="start">From</label><input type="datetime-local" step="900" class="form-control" id="start" name="start" value="<%= startVal %>" required></div>
+        <div class="col-12"><label class="form-label small" for="end">Until</label><input type="datetime-local" step="900" class="form-control" id="end" name="end" value="<%= endVal %>" required></div>
+        <div class="col-12"><label class="form-label small" for="vehicleType">Vehicle</label>
+          <select class="form-select" id="vehicleType" name="vehicleType">
+            <% zone.vehicleTypesAllowed.forEach(function (t) { %><option value="<%= t %>" <%= vehicleType === t ? 'selected' : '' %>><%= fmt.vehicleLabel(t) %></option><% }) %>
+          </select></div>
+        <div class="col-12"><button class="btn btn-outline-primary w-100" type="submit">Show live availability</button></div>
+      </form>
+    </div></div>
+  </div>
+</div>
+
+<hr class="my-4">
+
+<% if (problem) { %>
+  <div class="alert alert-warning"><i class="bi bi-info-circle"></i> <%= problem %></div>
+<% } else if (!windowGiven) { %>
+  <p class="text-muted">Choose a start and end time to see which bays are free and what the price will be.</p>
+<% } else { %>
+  <form action="/user/zones/<%= zone._id %>/book" method="POST" class="needs-validation" novalidate>
+    <input type="hidden" name="booking[startTime]" value="<%= startVal %>">
+    <input type="hidden" name="booking[endTime]" value="<%= endVal %>">
+    <input type="hidden" name="booking[vehicleType]" value="<%= vehicleType %>">
+
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <h5>Pick a bay <span class="small text-muted">(<%= freeCount %> free for <%= fmt.vehicleLabel(vehicleType) %>)</span></h5>
+        <div class="sp-legend mb-2">
+          <span><i style="background: var(--sp-free)"></i>Available</span>
+          <span><i style="background: var(--sp-busy)"></i>Booked</span>
+          <span><i style="background: var(--sp-maint)"></i>Maintenance</span>
+        </div>
+        <% if (!statuses.length) { %>
+          <p class="text-muted">The owner has not added any <%= fmt.vehicleLabel(vehicleType) %> slots yet.</p>
+        <% } else { %>
+          <div class="sp-baymap" role="radiogroup" aria-label="Parking bays">
+            <% if (freeCount) { %>
+              <div class="bay bay--available" style="grid-column: 1 / -1; min-height: 0; border-top-width: 2px; padding: .5rem;">
+                <label class="w-100 mb-0" style="cursor:pointer"><input type="radio" name="booking[slotId]" value="" checked> Let SPACER pick the best free bay</label>
+              </div>
+            <% } %>
+            <% statuses.forEach(function (s) { %>
+              <% if (s.state === 'available') { %>
+                <label class="position-relative m-0">
+                  <input class="bay-input" type="radio" name="booking[slotId]" value="<%= s.slot._id %>">
+                  <span class="bay bay--available"><i class="bi <%= fmt.vehicleIcon(s.slot.vehicleType) %>"></i><%= s.slot.label %><% if (s.slot.hasEVCharger) { %><small><i class="bi bi-lightning-charge-fill"></i> charger</small><% } %></span>
+                </label>
+              <% } else { %>
+                <div class="bay bay--<%= s.state %>" title="<%= s.state %>"><i class="bi <%= s.state === 'booked' ? 'bi-car-front-fill' : 'bi-cone-striped' %>"></i><%= s.slot.label %><small><%= s.state === 'booked' ? 'Booked' : 'Maintenance' %></small></div>
+              <% } %>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="card"><div class="card-body">
+          <h5>Your price</h5>
+          <div class="d-flex align-items-baseline gap-2">
+            <span class="sp-price display-6"><%= fmt.currency(quote.total) %></span>
+            <span class="text-muted small">for <%= quote.hours %> h · avg <%= fmt.currency(quote.pricePerHour) %>/h</span>
+          </div>
+          <a class="small" data-bs-toggle="collapse" href="#whyPrice" role="button" aria-expanded="false" aria-controls="whyPrice">Why this price?</a>
+          <div class="collapse mt-2" id="whyPrice">
+            <table class="table table-sm sp-breakdown mb-1">
+              <tbody>
+                <% quote.lines.forEach(function (l) { %>
+                  <tr><td><strong><%= l.label %></strong><div class="small text-muted"><%= l.note %></div></td><td class="text-end"><%= l.multiplier === null ? fmt.currency(quote.basePricePerHour) : '×' + l.multiplier.toFixed(2) %></td></tr>
+                <% }) %>
+                <tr class="table-light"><td><strong>Overall</strong><div class="small text-muted">kept between 0.8× and 2.0× of base</div></td><td class="text-end"><strong>×<%= quote.finalMultiplier.toFixed(2) %></strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <hr>
+          <div class="mb-3">
+            <label for="vehiclePlate" class="form-label">Vehicle number</label>
+            <input type="text" class="form-control text-uppercase" id="vehiclePlate" name="booking[vehiclePlate]" list="myPlates" placeholder="MH12AB1234" pattern="[A-Za-z]{2}[0-9]{1,2}[ -]?[A-Za-z]{1,3}[ -]?[0-9]{1,4}" required>
+            <datalist id="myPlates">
+              <% vehicles.filter(function (v) { return v.type === vehicleType; }).forEach(function (v) { %><option value="<%= v.plateNumber %>"><% }) %>
+            </datalist>
+            <div class="invalid-feedback">Enter a valid vehicle number, like MH12AB1234.</div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100" <%= freeCount ? '' : 'disabled' %> data-loading-text="Holding your bay...">
+            <%= freeCount ? 'Reserve and pay' : 'Fully booked for this time' %>
+          </button>
+          <p class="small text-muted mt-2 mb-0">The bay is held for 10 minutes while you pay. Free cancellation until 2 hours before start.</p>
+        </div></div>
+      </div>
+    </div>
+  </form>
+<% } %>

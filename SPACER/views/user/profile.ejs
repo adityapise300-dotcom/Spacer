@@ -1,0 +1,26 @@
+<% layout('/layouts/boilerplate') -%>
+<div class="row justify-content-center"><div class="col-lg-7">
+  <h1 class="h3 mb-3">Your profile</h1>
+  <div class="card"><div class="card-body p-4">
+    <form action="/user/profile?_method=PUT" method="POST" class="needs-validation" novalidate>
+      <div class="mb-3"><label class="form-label" for="email">Email</label><input class="form-control" id="email" value="<%= profile.email %>" disabled></div>
+      <div class="row">
+        <div class="col-md-6 mb-3"><label class="form-label" for="name">Full name</label><input class="form-control" id="name" name="user[name]" value="<%= profile.name %>" minlength="2" maxlength="80" required></div>
+        <div class="col-md-6 mb-3"><label class="form-label" for="phone">Mobile number</label><input class="form-control" id="phone" name="user[phone]" value="<%= profile.phone %>" pattern="(\+91)?[6-9][0-9]{9}" required>
+          <div class="invalid-feedback">Enter a 10-digit Indian mobile number.</div></div>
+      </div>
+      <h5 class="mt-2">My vehicles</h5>
+      <p class="small text-muted">Saved vehicles are suggested when you book. Leave a row empty to skip it.</p>
+      <% const rows = Math.max(3, (profile.vehicles || []).length + 1); %>
+      <% for (let i = 0; i < Math.min(rows, 5); i++) { const v = (profile.vehicles || [])[i] || {}; %>
+        <div class="row g-2 mb-2">
+          <div class="col-7"><input class="form-control text-uppercase" name="user[vehicles][<%= i %>][plateNumber]" value="<%= v.plateNumber || '' %>" placeholder="MH12AB1234" aria-label="Vehicle number <%= i + 1 %>"></div>
+          <div class="col-5"><select class="form-select" name="user[vehicles][<%= i %>][type]" aria-label="Vehicle type <%= i + 1 %>">
+            <% ['car','bike','suv','ev'].forEach(function (t) { %><option value="<%= t %>" <%= v.type === t ? 'selected' : '' %>><%= fmt.vehicleLabel(t) %></option><% }) %>
+          </select></div>
+        </div>
+      <% } %>
+      <button class="btn btn-primary mt-2" type="submit" data-loading-text="Saving...">Save changes</button>
+    </form>
+  </div></div>
+</div></div>
