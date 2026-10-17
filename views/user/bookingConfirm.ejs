@@ -36,6 +36,9 @@
   <div class="col-lg-5">
     <div class="card"><div class="card-body">
       <h5>Actions</h5>
+      <% if (['pending_payment', 'confirmed', 'checked_in'].includes(booking.status)) { %>
+        <div class="mb-2"><%- include('../includes/directionsButton', { zone: booking.zone, block: true, outline: false, label: 'Get directions in Google Maps', slotLabel: booking.slotLabel }) %></div>
+      <% } %>
       <% if (booking.status === 'pending_payment') { %>
         <p class="small">Hold ends in <strong class="sp-countdown" data-countdown="<%= booking.paymentExpiresAt.toISOString() %>"></strong></p>
         <a class="btn btn-primary w-100 mb-2" href="/user/bookings/<%= booking._id %>/pay">Pay <%= fmt.currency(booking.totalAmount) %></a>

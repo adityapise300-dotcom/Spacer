@@ -21,10 +21,11 @@
     <% if (!upcoming.length) { %>
       <div class="card"><div class="card-body text-muted">No upcoming bookings. <a href="/user/search">Find a spot</a>.</div></div>
     <% } else { upcoming.forEach(function (b) { %>
-      <a class="card mb-2 text-decoration-none text-reset" href="/user/bookings/<%= b._id %>"><div class="card-body py-2">
-        <div class="d-flex justify-content-between"><strong><%= b.zone ? b.zone.name : 'Zone' %></strong><span class="badge text-bg-<%= fmt.statusClass(b.status) %>"><%= fmt.statusLabel(b.status) %></span></div>
-        <div class="small text-muted"><%= fmt.dateTime(b.startTime) %> to <%= fmt.timeOnly(b.endTime) %> · Slot <%= b.slotLabel %></div>
-      </div></a>
+      <div class="card mb-2"><div class="card-body py-2">
+        <div class="d-flex justify-content-between"><a class="fw-bold text-decoration-none text-reset" href="/user/bookings/<%= b._id %>"><%= b.zone ? b.zone.name : 'Zone' %></a><span class="badge text-bg-<%= fmt.statusClass(b.status) %>"><%= fmt.statusLabel(b.status) %></span></div>
+        <div class="small text-muted mb-2"><%= fmt.dateTime(b.startTime) %> to <%= fmt.timeOnly(b.endTime) %> · Slot <%= b.slotLabel %></div>
+        <% if (b.zone) { %><%- include('../includes/directionsButton', { zone: b.zone, size: 'sm' }) %><% } %>
+      </div></div>
     <% }) } %>
   </div>
   <div class="col-lg-6">

@@ -72,3 +72,12 @@ The forecast is a weighted moving average of the same weekday-hour over the prev
 ## Notes
 
 Forms rely on `SameSite=Lax` session cookies; add CSRF tokens before any real deployment. Deleting a zone also deletes its slots, bookings and transactions.
+
+## Google Maps directions
+
+Drivers get a **Get directions** button on the zone page, search result cards, booking details, the bookings list and the dashboard. It opens Google Maps (app on phones, website on desktop) with turn-by-turn directions from the driver's current location to the zone.
+
+- **No API key, billing or extra setup.** It uses plain Google Maps URLs built from the zone's saved coordinates (`utils/helpers.js` → `mapsDirectionsUrl`, rendered by `views/includes/directionsButton.ejs`).
+- Directions go to the **zone entrance**. Maps cannot route to a single bay, so the booking page also shows the slot label.
+- The button is hidden for zones without coordinates, and for bookings that are cancelled, expired, completed or no-show.
+- Owners must enter correct coordinates in the zone form (`longitude, latitude`), because the directions are only as accurate as that pin.

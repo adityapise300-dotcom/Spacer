@@ -54,7 +54,7 @@ exports.create = async (req, res) => {
 exports.list = async (req, res) => {
   await availability.expireStaleHolds({ user: req.session.user.id });
   const bookings = await Booking.find({ user: req.session.user.id })
-    .populate('zone', 'name address').sort({ startTime: -1 }).limit(100).lean();
+    .populate('zone', 'name address location').sort({ startTime: -1 }).limit(100).lean();
   res.render('user/bookings', { pageTitle: 'My bookings', bookings });
 };
 

@@ -33,7 +33,10 @@
           <div class="small text-success mb-2"><i class="bi bi-check-circle"></i> <%= info.free %> slot<%= info.free > 1 ? 's' : '' %> free</div>
         <% } %>
       <% } %>
-      <a class="btn btn-primary btn-sm w-100 mt-2" href="/user/zones/<%= z._id %><%= detailQuery ? '?' + detailQuery : '' %>">View and book</a>
+      <div class="d-flex gap-2 mt-2">
+        <a class="btn btn-primary btn-sm flex-grow-1" href="/user/zones/<%= z._id %><%= detailQuery ? '?' + detailQuery : '' %>">View and book</a>
+        <%- include('./directionsButton', { zone: z, size: 'sm', label: 'Directions' }) %>
+      </div>
     </div>
   </div>
 </div>

@@ -8,7 +8,7 @@ exports.dashboard = async (req, res) => {
   const now = new Date();
   const [upcoming, recent] = await Promise.all([
     Booking.find({ user, status: { $in: ['pending_payment', 'confirmed', 'checked_in'] }, endTime: { $gt: now } })
-      .populate('zone', 'name').sort({ startTime: 1 }).limit(5).lean(),
+      .populate('zone', 'name location').sort({ startTime: 1 }).limit(5).lean(),
     Booking.find({ user }).populate('zone', 'name').sort({ createdAt: -1 }).limit(5).lean(),
   ]);
   const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1);

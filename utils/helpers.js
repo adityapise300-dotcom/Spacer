@@ -70,9 +70,25 @@ const distanceKm = (lat1, lng1, lat2, lng2) => {
   return 2 * R * Math.asin(Math.sqrt(a));
 };
 
+// ---- Google Maps deep links (Maps URLs: https://developers.google.com/maps/documentation/urls/get-started) ----
+// These are plain links, so NO API key, billing or JavaScript SDK is needed.
+// "origin" is left out on purpose: Google Maps then starts from the driver's current location.
+// Maps cannot route to an individual bay, so directions always go to the zone entrance (zone.location);
+// the slot label is shown beside the button instead.
+const hasCoords = (zone) =>
+  Boolean(zone && zone.location && Array.isArray(zone.location.coordinates) && zone.location.coordinates.length === 2);
+
+const mapsDirectionsUrl = (zone, { mode = 'driving', navigate = false } = {}) => {
+  if (!hasCoords(zone)) return null;
+  const [lng, lat] = zone.location.coordinates; // GeoJSON order is [longitude, latitude]
+  const params = new URLSearchParams({ api: '1', destination: `${lat},${lng}`, travelmode: mode });
+  if (navigate) params.set('dir_action', 'navigate'); // on phones, starts turn-by-turn straight away
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+};
+
 module.exports = {
   TZ, currency, dateTime, dateOnly, timeOnly, toInputValue, parseLocal, parseLocalDate, hoursBetween,
-  statusClass, statusLabel, DAYS, hourLabel, escapeRegex, distanceKm,
+  statusClass, statusLabel, DAYS, hourLabel, escapeRegex, distanceKm, hasCoords, mapsDirectionsUrl,
   vehicleLabel: (t) => VEHICLE_LABELS[t] || t,
   vehicleIcon: (t) => VEHICLE_ICONS[t] || 'bi-car-front',
 };

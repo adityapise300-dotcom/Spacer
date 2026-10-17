@@ -1,0 +1,14 @@
+<%#
+  Expects: zone (needs zone.location.coordinates)
+  Optional: size ('sm' | ''), block (bool), label (string), outline (bool), slotLabel (string)
+  Opens Google Maps with directions from the driver's current location to the zone. No API key needed.
+%>
+<% const _url = fmt.mapsDirectionsUrl(zone, { navigate: true }); %>
+<% if (_url) { %>
+  <a class="btn <%= locals.outline === false ? 'btn-success' : 'btn-outline-success' %> <%= locals.size === 'sm' ? 'btn-sm' : '' %> <%= locals.block ? 'w-100' : '' %>"
+     href="<%= _url %>" target="_blank" rel="noopener noreferrer"
+     aria-label="Get directions to <%= zone.name || 'this parking zone' %> in Google Maps">
+    <i class="bi bi-sign-turn-right-fill"></i> <%= locals.label || 'Get directions' %>
+  </a>
+  <% if (locals.slotLabel) { %><div class="small text-muted mt-1">Directions lead to the zone entrance. Your bay is <strong><%= slotLabel %></strong>.</div><% } %>
+<% } %>

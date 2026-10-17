@@ -17,7 +17,10 @@
             <td><%= b.slotLabel %></td>
             <td><%= fmt.currency(b.totalAmount) %></td>
             <td><span class="badge text-bg-<%= fmt.statusClass(b.status) %>"><%= fmt.statusLabel(b.status) %></span></td>
-            <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/user/bookings/<%= b._id %>">Details</a></td>
+            <td class="text-end text-nowrap">
+              <% if (b.zone && ['pending_payment', 'confirmed', 'checked_in'].includes(b.status)) { %><%- include('../includes/directionsButton', { zone: b.zone, size: 'sm', label: 'Directions' }) %><% } %>
+              <a class="btn btn-sm btn-outline-primary" href="/user/bookings/<%= b._id %>">Details</a>
+            </td>
           </tr>
         <% }) %>
       </tbody>
