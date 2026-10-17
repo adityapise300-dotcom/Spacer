@@ -37,6 +37,7 @@ a:focus-visible { outline: 2px solid var(--sp-accent); outline-offset: 2px; }
 .sp-nav .nav-link { color: #c9cde0; }
 .sp-nav .nav-link:hover, .sp-nav .nav-link.active { color: #fff; }
 .sp-logo { display: inline-grid; place-items: center; width: 1.7rem; height: 1.7rem; margin-right: .4rem; border-radius: .35rem; background: var(--sp-accent); color: #fff; font-weight: 700; font-size: 1rem; box-shadow: inset 0 0 0 2px #fff; }
+.sp-logo-img { width: 2rem; height: 2rem; margin-right: .5rem; border-radius: .4rem; object-fit: cover; vertical-align: middle; }
 
 /* Hero */
 .sp-hero { background: var(--sp-ink); color: #fff; border-radius: 1rem; padding: 2.5rem 1.5rem; overflow: hidden; }
