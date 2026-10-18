@@ -1,0 +1,39 @@
+<%# Owner zone card. Expects: c (item built by owner/dashboardController) %>
+<article class="db-ozone db-card db-lift">
+  <div class="db-ozone__media db-media">
+    <% if (c.image) { %>
+      <img class="db-img" src="<%= c.image %>" alt="Photo of <%= c.name %>" loading="lazy" decoding="async">
+    <% } else { %>
+      <div class="db-ph" aria-hidden="true"><span>P</span></div>
+    <% } %>
+    <span class="db-media__badge db-media__badge--<%= c.badge.tone %>"><%= c.badge.label %></span>
+  </div>
+  <div class="db-ozone__body">
+    <div>
+      <h3 class="db-ozone__name"><a class="db-zone__link" href="/owner/zones/<%= c.id %>"><%= c.name %></a></h3>
+      <p class="db-ozone__addr"><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= c.address %></p>
+    </div>
+
+    <div>
+      <div class="db-prog__label">
+        <span>Occupancy now</span>
+        <strong><%= c.busy %> / <%= c.total %> bays occupied</strong>
+      </div>
+      <div class="db-bar" role="progressbar" aria-label="Occupancy of <%= c.name %>" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= c.pct %>">
+        <div class="db-bar__fill" style="width: <%= c.pct %>%"></div>
+      </div>
+      <% if (!c.hasSlots) { %><p class="db-ozone__hint"><i class="bi bi-info-circle" aria-hidden="true"></i> No bays yet. <a href="/owner/zones/<%= c.id %>/slots/new">Add slots</a> so drivers can book.</p><% } %>
+    </div>
+
+    <div class="db-minis">
+      <div class="db-mini"><span class="db-mini__label">Revenue today</span><span class="db-mini__value"><%= fmt.currency(c.revenueToday) %></span></div>
+      <div class="db-mini"><span class="db-mini__label">Bookings today</span><span class="db-mini__value"><%= c.bookingsToday %></span></div>
+      <div class="db-mini"><span class="db-mini__label"><%= c.priceLive ? 'Price now' : 'Base price' %></span><span class="db-mini__value"><%= fmt.currency(c.priceNow) %><small>/h</small></span></div>
+    </div>
+
+    <div class="db-ozone__actions">
+      <a class="btn btn-outline-primary btn-sm rounded-pill px-3" href="/owner/zones/<%= c.id %>">Manage <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+      <a class="btn btn-outline-secondary btn-sm rounded-pill px-3" href="/owner/bookings?zone=<%= c.id %>">View bookings</a>
+    </div>
+  </div>
+</article>

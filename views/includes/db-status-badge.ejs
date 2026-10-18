@@ -1,0 +1,2 @@
+<%# Expects: status (booking status). Optional: onPhoto (bool) %>
+<span class="db-badge db-badge--<%= fmt.statusClass(status) %><%= (typeof onPhoto !== 'undefined' && onPhoto) ? ' db-badge--photo' : '' %>"><%= fmt.statusLabel(status) %></span>

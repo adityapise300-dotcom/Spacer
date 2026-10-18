@@ -1,0 +1,37 @@
+<%#
+  Stat tile.
+  Expects: label, value (string, already formatted)
+  Optional: icon, sub (small note), text (bool: value is a name, not a number),
+            count + prefix + suffix (number for the count-up animation; the real value is already in the HTML),
+            kpi (bool: white KPI card with the icon beside the value), trend { dir: 'up'|'down'|'flat', text }
+  NOTE: optional values use typeof guards because `locals` inside an ejs-mate include does not hold include data.
+%>
+<% const _icon = typeof icon !== 'undefined' ? icon : null; %>
+<% const _sub = typeof sub !== 'undefined' ? sub : null; %>
+<% const _text = typeof text !== 'undefined' && text; %>
+<% const _kpi = typeof kpi !== 'undefined' && kpi; %>
+<% const _trend = typeof trend !== 'undefined' ? trend : null; %>
+<% const _count = typeof count !== 'undefined' && count !== null ? count : null; %>
+<% const _prefix = typeof prefix !== 'undefined' ? prefix : ''; %>
+<% const _suffix = typeof suffix !== 'undefined' ? suffix : ''; %>
+<% if (_kpi) { %>
+  <div class="db-tile db-tile--kpi db-lift">
+    <% if (_icon) { %><span class="db-tile__icon" aria-hidden="true"><i class="bi <%= _icon %>"></i></span><% } %>
+    <div class="db-tile__main">
+      <div class="db-tile__value"<% if (_count !== null) { %> data-db-count="<%= _count %>" data-db-prefix="<%= _prefix %>" data-db-suffix="<%= _suffix %>"<% } %>><%= value %></div>
+      <div class="db-tile__label"><%= label %></div>
+      <% if (_trend) { %>
+        <div class="db-trend db-trend--<%= _trend.dir %>"><i class="bi <%= _trend.dir === 'up' ? 'bi-arrow-up-right' : _trend.dir === 'down' ? 'bi-arrow-down-right' : 'bi-dash' %>" aria-hidden="true"></i> <%= _trend.text %></div>
+      <% } %>
+    </div>
+  </div>
+<% } else { %>
+  <div class="db-tile">
+    <div class="db-tile__top">
+      <% if (_icon) { %><i class="bi <%= _icon %>" aria-hidden="true"></i><% } %>
+      <span class="db-tile__label"><%= label %></span>
+    </div>
+    <div class="db-tile__value<%= _text ? ' db-tile__value--text' : '' %>"<% if (_count !== null) { %> data-db-count="<%= _count %>" data-db-prefix="<%= _prefix %>" data-db-suffix="<%= _suffix %>"<% } %>><%= value %></div>
+    <% if (_sub) { %><div class="db-tile__sub"><%= _sub %></div><% } %>
+  </div>
+<% } %>

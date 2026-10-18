@@ -1,0 +1,25 @@
+<%#
+  Friendly empty state with a pure-CSS illustration (no images to load).
+  Expects: title, text
+  Optional: illus ('park' | 'chart' | 'list' | 'zone'), href + cta (button), ctaIcon, compact (bool)
+  NOTE: under ejs-mate, `locals` inside an include does NOT hold the include data, so optional values
+  are read with typeof guards instead of locals.x.
+%>
+<% const _illus = typeof illus !== 'undefined' ? illus : 'zone'; %>
+<% const _compact = typeof compact !== 'undefined' && compact; %>
+<% const _href = typeof href !== 'undefined' ? href : null; %>
+<% const _cta = typeof cta !== 'undefined' ? cta : null; %>
+<% const _ctaIcon = typeof ctaIcon !== 'undefined' ? ctaIcon : null; %>
+<div class="db-empty<%= _compact ? ' db-empty--compact' : '' %>">
+  <span class="db-illus db-illus--<%= _illus %>" aria-hidden="true">
+    <% if (_illus === 'park') { for (let i = 0; i < 8; i++) { %><i></i><% } } %>
+    <% if (_illus === 'chart') { for (let i = 0; i < 7; i++) { %><i></i><% } } %>
+    <% if (_illus === 'list') { for (let i = 0; i < 3; i++) { %><i></i><% } } %>
+    <% if (_illus === 'zone') { %><i>P</i><% } %>
+  </span>
+  <h3 class="db-empty__title"><%= title %></h3>
+  <p class="db-empty__text"><%= text %></p>
+  <% if (_href && _cta) { %>
+    <a class="btn btn-primary rounded-pill px-4" href="<%= _href %>"><% if (_ctaIcon) { %><i class="bi <%= _ctaIcon %>" aria-hidden="true"></i> <% } %><%= _cta %></a>
+  <% } %>
+</div>

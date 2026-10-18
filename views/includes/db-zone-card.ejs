@@ -1,0 +1,46 @@
+<%#
+  Driver listing card ("Parking you may like"). Looks like a row in list view and a card in grid view.
+  Expects: c (item built by user/dashboardController), index (number)
+%>
+<% const z = c.zone; %>
+<% const _tone = c.total === 0 ? 'none' : c.free === 0 ? 'full' : (c.free / c.total <= 0.25 ? 'low' : 'ok'); %>
+<article class="db-zone db-card db-lift" data-db-zone data-index="<%= index %>" data-price="<%= c.price %>" data-free="<%= c.free %>"<% if (c.lat !== null && c.lng !== null) { %> data-lat="<%= c.lat %>" data-lng="<%= c.lng %>"<% } %>>
+  <div class="db-zone__media db-media">
+    <% if (c.image) { %>
+      <img class="db-img" src="<%= c.image %>" alt="Photo of <%= z.name %>" loading="lazy" decoding="async">
+    <% } else { %>
+      <div class="db-ph" aria-hidden="true"><span>P</span></div>
+    <% } %>
+    <% if (!c.open) { %><span class="db-media__badge db-media__badge--closed">Closed now</span><% } %>
+  </div>
+  <div class="db-zone__body">
+    <span class="db-cat db-cat--<%= c.categoryTone %>"><%= c.categoryLabel %></span>
+    <h3 class="db-zone__name"><a class="db-zone__link" href="/user/zones/<%= z._id %>"><%= z.name %></a></h3>
+    <p class="db-zone__addr"><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= z.address %></p>
+    <% if (z.description) { %><p class="db-zone__desc"><%= z.description %></p><% } %>
+
+    <ul class="db-chips">
+      <% c.amenities.forEach(function (a) { %><li class="db-chip"><i class="bi <%= a.icon %>" aria-hidden="true"></i> <%= a.label %></li><% }) %>
+      <% z.vehicleTypesAllowed.forEach(function (t) { %><li class="db-chip db-chip--vehicle"><i class="bi <%= fmt.vehicleIcon(t) %>" aria-hidden="true"></i> <%= fmt.vehicleLabel(t) %></li><% }) %>
+    </ul>
+
+    <div class="db-zone__row">
+      <div class="db-zone__facts">
+        <span class="db-free db-free--<%= _tone %>">
+          <i class="bi <%= _tone === 'full' ? 'bi-x-circle' : _tone === 'none' ? 'bi-dash-circle' : 'bi-check-circle' %>" aria-hidden="true"></i>
+          <% if (_tone === 'none') { %>No bays listed yet<% } else if (_tone === 'full') { %>Full right now (0 of <%= c.total %>)<% } else { %><%= c.free %> of <%= c.total %> free<% } %>
+        </span>
+        <span class="db-dist" data-db-distance hidden></span>
+      </div>
+      <div class="db-zone__price">
+        <span class="db-zone__amt"><%= fmt.currency(c.price) %></span><span class="db-zone__unit">/hour</span>
+        <span class="db-zone__hint"><%= c.priceLive ? 'price right now' : 'base price' %></span>
+      </div>
+    </div>
+
+    <div class="db-zone__actions">
+      <a class="btn btn-primary btn-sm rounded-pill px-3" href="/user/zones/<%= z._id %>">View and book</a>
+      <%- include('./directionsButton', { zone: z, size: 'sm', label: 'Directions' }) %>
+    </div>
+  </div>
+</article>

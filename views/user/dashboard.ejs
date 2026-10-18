@@ -1,42 +1,168 @@
 <% layout('/layouts/boilerplate') -%>
-<h1 class="h3 mb-3">Hello, <%= currentUser.name.split(' ')[0] %></h1>
+<%# The layout has no per-page <head> slot, so the dashboard assets are linked here (these two views only). %>
+<link rel="stylesheet" href="/css/dashboard.css">
+<script src="/js/dashboard.js" defer></script>
 
-<div class="card mb-4"><div class="card-body">
-  <h5 class="mb-3">Quick search</h5>
-  <form action="/user/search" method="GET" class="row g-2 align-items-end">
-    <div class="col-md-3"><label class="form-label small" for="q">Area or name</label><input class="form-control" id="q" name="q" placeholder="Koregaon Park"></div>
-    <div class="col-md-3"><label class="form-label small" for="start">From</label><input type="datetime-local" step="900" class="form-control" id="start" name="start" value="<%= defaults.start %>"></div>
-    <div class="col-md-3"><label class="form-label small" for="end">Until</label><input type="datetime-local" step="900" class="form-control" id="end" name="end" value="<%= defaults.end %>"></div>
-    <div class="col-md-2"><label class="form-label small" for="vehicleType">Vehicle</label>
-      <select class="form-select" id="vehicleType" name="vehicleType"><option value="">Any</option>
-        <% ['bike','car','suv','ev'].forEach(function (t) { %><option value="<%= t %>"><%= fmt.vehicleLabel(t) %></option><% }) %>
-      </select></div>
-    <div class="col-md-1"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-search"></i></button></div>
-  </form>
-</div></div>
+<div class="db-page">
 
-<div class="row g-4">
-  <div class="col-lg-6">
-    <h5>Upcoming</h5>
-    <% if (!upcoming.length) { %>
-      <div class="card"><div class="card-body text-muted">No upcoming bookings. <a href="/user/search">Find a spot</a>.</div></div>
-    <% } else { upcoming.forEach(function (b) { %>
-      <div class="card mb-2"><div class="card-body py-2">
-        <div class="d-flex justify-content-between"><a class="fw-bold text-decoration-none text-reset" href="/user/bookings/<%= b._id %>"><%= b.zone ? b.zone.name : 'Zone' %></a><span class="badge text-bg-<%= fmt.statusClass(b.status) %>"><%= fmt.statusLabel(b.status) %></span></div>
-        <div class="small text-muted mb-2"><%= fmt.dateTime(b.startTime) %> to <%= fmt.timeOnly(b.endTime) %> · Slot <%= b.slotLabel %></div>
-        <% if (b.zone) { %><%- include('../includes/directionsButton', { zone: b.zone, size: 'sm' }) %><% } %>
-      </div></div>
-    <% }) } %>
-  </div>
-  <div class="col-lg-6">
-    <h5>Recent activity</h5>
+  <%# 1. Welcome banner + quick search (same field names and action as before) %>
+  <header class="db-hero">
+    <h1 class="db-hero__title">Hello, <%= currentUser.name.split(' ')[0] %></h1>
+    <p class="db-hero__tag">Find a bay, book it in minutes and park without circling the block.</p>
+  </header>
+  <section class="db-search" aria-labelledby="db-search-title">
+    <h2 class="visually-hidden" id="db-search-title">Quick search</h2>
+    <form action="/user/search" method="GET" class="row g-2 align-items-end">
+      <div class="col-12 col-md-3"><label class="form-label small mb-1" for="q">Area or name</label><input class="form-control" id="q" name="q" placeholder="Koregaon Park"></div>
+      <div class="col-12 col-sm-6 col-md-3"><label class="form-label small mb-1" for="start">From</label><input type="datetime-local" step="900" class="form-control" id="start" name="start" value="<%= defaults.start %>"></div>
+      <div class="col-12 col-sm-6 col-md-3"><label class="form-label small mb-1" for="end">Until</label><input type="datetime-local" step="900" class="form-control" id="end" name="end" value="<%= defaults.end %>"></div>
+      <div class="col-8 col-md-2"><label class="form-label small mb-1" for="vehicleType">Vehicle</label>
+        <select class="form-select" id="vehicleType" name="vehicleType"><option value="">Any</option>
+          <% ['bike','car','suv','ev'].forEach(function (t) { %><option value="<%= t %>"><%= fmt.vehicleLabel(t) %></option><% }) %>
+        </select></div>
+      <div class="col-4 col-md-1"><button class="btn btn-primary w-100" type="submit" aria-label="Search parking"><i class="bi bi-search" aria-hidden="true"></i></button></div>
+    </form>
+  </section>
+
+  <%# 2. Next booking %>
+  <section class="db-section" aria-labelledby="db-next-title">
+    <h2 class="db-section__title" id="db-next-title">Your next booking</h2>
+    <% if (nextBooking) { const b = nextBooking; const z = b.zone; %>
+      <article class="db-card db-next">
+        <div class="db-next__media db-media">
+          <% if (z && z.images && z.images[0]) { %>
+            <img class="db-img" src="<%= z.images[0] %>" alt="Photo of <%= z.name %>" loading="lazy" decoding="async">
+          <% } else { %>
+            <div class="db-ph" aria-hidden="true"><span>P</span></div>
+          <% } %>
+          <span class="db-media__badge"><%- include('../includes/db-status-badge', { status: b.status, onPhoto: true }) %></span>
+        </div>
+        <div class="db-next__body">
+          <span class="db-countdown db-countdown--<%= b.countdown.tone %>"><i class="bi bi-hourglass-split" aria-hidden="true"></i> <%= b.countdown.text %></span>
+          <h3 class="db-next__title"><%= z ? z.name : 'Parking zone' %></h3>
+          <% if (z) { %><p class="db-next__addr"><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= z.address %></p><% } %>
+          <ul class="db-facts">
+            <li><i class="bi bi-calendar-event" aria-hidden="true"></i> <%= fmt.dateTime(b.startTime) %> to <%= fmt.timeOnly(b.endTime) %></li>
+            <li><i class="bi bi-p-square" aria-hidden="true"></i> Slot <%= b.slotLabel %></li>
+            <li><i class="bi <%= fmt.vehicleIcon(b.vehicleType) %>" aria-hidden="true"></i> <%= b.vehiclePlate %> · <%= fmt.vehicleLabel(b.vehicleType) %></li>
+          </ul>
+          <div class="db-next__actions">
+            <% if (z) { %><%- include('../includes/directionsButton', { zone: z, label: 'Get directions' }) %><% } %>
+            <% if (b.status === 'pending_payment') { %><a class="btn btn-primary rounded-pill px-4" href="/user/bookings/<%= b._id %>/pay"><i class="bi bi-credit-card" aria-hidden="true"></i> Pay now</a><% } %>
+            <a class="btn btn-outline-secondary rounded-pill px-4" href="/user/bookings/<%= b._id %>">Details</a>
+          </div>
+        </div>
+      </article>
+
+      <% if (laterBookings.length) { %>
+        <h3 class="db-subtitle">Also coming up</h3>
+        <ul class="db-list">
+          <% laterBookings.forEach(function (lb) { %>
+            <li class="db-list__item">
+              <a class="db-list__main" href="/user/bookings/<%= lb._id %>">
+                <strong><%= lb.zone ? lb.zone.name : 'Parking zone' %></strong>
+                <span class="db-muted"><%= fmt.dateTime(lb.startTime) %> to <%= fmt.timeOnly(lb.endTime) %> · Slot <%= lb.slotLabel %></span>
+              </a>
+              <%- include('../includes/db-status-badge', { status: lb.status }) %>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    <% } else { %>
+      <div class="db-card">
+        <%- include('../includes/db-empty', { illus: 'park', title: 'No upcoming bookings', text: 'Book a bay in a minute and it will show up here with a live countdown and directions.', href: '/user/search', cta: 'Find a spot', ctaIcon: 'bi-search' }) %>
+      </div>
+    <% } %>
+  </section>
+
+  <%# 3. Stat tiles (real numbers only) %>
+  <section class="db-section" aria-labelledby="db-stats-title">
+    <h2 class="db-section__title" id="db-stats-title">Your parking in numbers</h2>
+    <div class="db-tiles">
+      <% stats.forEach(function (s) { %><%- include('../includes/db-stat-tile', s) %><% }) %>
+    </div>
+  </section>
+
+  <%# 4. Parking you may like %>
+  <section class="db-section" aria-labelledby="db-list-title" data-db-listing>
+    <div class="db-head">
+      <div>
+        <h2 class="db-section__title mb-1" id="db-list-title">Parking you may like</h2>
+        <p class="db-muted mb-0">Showing <%= listing.length %> of <%= activeZoneCount %> zone<%= activeZoneCount === 1 ? '' : 's' %> in SPACER</p>
+      </div>
+      <a class="db-link" href="/user/search">See all zones <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+    </div>
+
+    <% if (!listing.length) { %>
+      <div class="db-card">
+        <%- include('../includes/db-empty', { illus: 'zone', title: 'No zones to show yet', text: 'Parking zones appear here as soon as owners list them. You can still open the full search.', href: '/user/search', cta: 'Open search', ctaIcon: 'bi-search' }) %>
+      </div>
+    <% } else { %>
+      <div class="db-toolbar">
+        <div class="db-toggle" role="group" aria-label="Choose list or grid layout">
+          <button type="button" class="db-toggle__btn" data-db-view="list" aria-pressed="true" aria-label="List view"><i class="bi bi-list-ul" aria-hidden="true"></i></button>
+          <button type="button" class="db-toggle__btn" data-db-view="grid" aria-pressed="false" aria-label="Grid view"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i></button>
+        </div>
+        <div class="db-pills" role="group" aria-label="Sort zones">
+          <button type="button" class="db-pill" data-db-sort="price" aria-pressed="false">Lowest price</button>
+          <button type="button" class="db-pill" data-db-sort="free" aria-pressed="false">Most free bays</button>
+          <button type="button" class="db-pill" data-db-sort="near" aria-pressed="false"><i class="bi bi-crosshair" aria-hidden="true"></i> Nearest</button>
+        </div>
+      </div>
+      <p class="db-note" data-db-note hidden></p>
+      <p class="visually-hidden" role="status" aria-live="polite" data-db-live></p>
+
+      <div class="db-zonelist" data-db-zonelist data-view="list">
+        <% listing.forEach(function (c, i) { %><%- include('../includes/db-zone-card', { c: c, index: i }) %><% }) %>
+      </div>
+    <% } %>
+  </section>
+
+  <%# 5. Recent activity %>
+  <section class="db-section" aria-labelledby="db-recent-title">
+    <div class="db-head">
+      <h2 class="db-section__title mb-0" id="db-recent-title">Recent activity</h2>
+      <% if (recent.length) { %><a class="db-link" href="/user/bookings">All bookings <i class="bi bi-arrow-right" aria-hidden="true"></i></a><% } %>
+    </div>
     <% if (!recent.length) { %>
-      <div class="card"><div class="card-body text-muted">Nothing yet. Your bookings will show up here.</div></div>
-    <% } else { recent.forEach(function (b) { %>
-      <a class="card mb-2 text-decoration-none text-reset" href="/user/bookings/<%= b._id %>"><div class="card-body py-2">
-        <div class="d-flex justify-content-between"><strong><%= b.zone ? b.zone.name : 'Zone' %></strong><span><%= fmt.currency(b.totalAmount) %></span></div>
-        <div class="small text-muted"><%= fmt.dateTime(b.startTime) %> · <span class="text-<%= fmt.statusClass(b.status) %>"><%= fmt.statusLabel(b.status) %></span></div>
-      </div></a>
-    <% }) } %>
-  </div>
+      <div class="db-card">
+        <%- include('../includes/db-empty', { illus: 'list', title: 'Nothing here yet', text: 'Your bookings and payments will appear here as a simple timeline.', href: '/user/search', cta: 'Find a spot', ctaIcon: 'bi-search' }) %>
+      </div>
+    <% } else { %>
+      <div class="db-card">
+        <ol class="db-timeline">
+          <% recent.forEach(function (b) { %>
+            <li class="db-timeline__item db-timeline__item--<%= fmt.statusClass(b.status) %>">
+              <span class="db-timeline__dot" aria-hidden="true"><i class="bi <%= b.icon %>"></i></span>
+              <a class="db-timeline__body" href="/user/bookings/<%= b._id %>">
+                <span class="db-timeline__title"><%= b.zone ? b.zone.name : 'Parking zone' %></span>
+                <span class="db-muted"><%= fmt.dateTime(b.startTime) %> · Slot <%= b.slotLabel %></span>
+              </a>
+              <span class="db-timeline__side">
+                <strong class="db-timeline__amt"><%= fmt.currency(b.totalAmount) %></strong>
+                <%- include('../includes/db-status-badge', { status: b.status }) %>
+              </span>
+            </li>
+          <% }) %>
+        </ol>
+      </div>
+    <% } %>
+  </section>
+
+  <%# 6. Closing call to action %>
+  <section class="db-cta" aria-labelledby="db-cta-title">
+    <div class="db-cta__text">
+      <h2 class="db-cta__title" id="db-cta-title">Search more parking</h2>
+      <p class="db-cta__sub">Type an area, a landmark or a zone name and see what is open near you.</p>
+    </div>
+    <form class="db-cta__form" action="/user/search" method="GET">
+      <label class="db-cta__label" for="db-cta-q">Area or name</label>
+      <div class="db-cta__field">
+        <i class="bi bi-geo-alt" aria-hidden="true"></i>
+        <input id="db-cta-q" name="q" type="search" placeholder="Hinjewadi, FC Road, Baner...">
+        <button type="submit" aria-label="Search this area"><i class="bi bi-search" aria-hidden="true"></i></button>
+      </div>
+    </form>
+  </section>
+
 </div>

@@ -1,39 +1,204 @@
 <% layout('/layouts/boilerplate') -%>
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h3 mb-0">Owner dashboard</h1>
-  <a href="/owner/zones/new" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Add zone</a>
-</div>
-<div class="row g-3 mb-4">
-  <div class="col-6 col-lg-3"><div class="sp-kpi"><div class="sp-kpi-value"><%= fmt.currency(kpis.todayRevenue) %></div><div class="sp-kpi-label">Today's revenue (net of refunds)</div></div></div>
-  <div class="col-6 col-lg-3"><div class="sp-kpi"><div class="sp-kpi-value"><%= kpis.occupancy %>%</div><div class="sp-kpi-label">Occupancy right now</div></div></div>
-  <div class="col-6 col-lg-3"><div class="sp-kpi"><div class="sp-kpi-value"><%= kpis.activeNow %></div><div class="sp-kpi-label">Active bookings</div></div></div>
-  <div class="col-6 col-lg-3"><div class="sp-kpi"><div class="sp-kpi-value"><%= kpis.upcoming %></div><div class="sp-kpi-label">Upcoming bookings</div></div></div>
-</div>
+<%# The layout has no per-page <head> slot, so the dashboard assets are linked here (these two views only). %>
+<link rel="stylesheet" href="/css/dashboard.css">
+<%# Same pinned Chart.js URL the layout uses (jsDelivr is already allowed by the CSP). Loaded here because the layout's
+    `locals.useCharts` switch cannot see controller values under ejs-mate. `defer` keeps it ahead of dashboard.js. %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+<script src="/js/dashboard.js" defer></script>
 
-<% if (!zoneRows.length) { %>
-  <div class="text-center text-muted py-5"><i class="bi bi-p-square display-5"></i><p class="mt-2">You have no zones yet. <a href="/owner/zones/new">Add your first zone</a> to start taking bookings.</p></div>
-<% } else { %>
-<div class="row g-4">
-  <div class="col-lg-5">
-    <h5>Zones right now</h5>
-    <% zoneRows.forEach(function (r) { const pct = r.total ? Math.round(r.busy / r.total * 100) : 0; %>
-      <a href="/owner/zones/<%= r.zone._id %>" class="card mb-2 text-decoration-none text-reset"><div class="card-body py-2">
-        <div class="d-flex justify-content-between"><strong><%= r.zone.name %></strong><span class="small text-muted"><%= r.busy %> / <%= r.total %> bays</span></div>
-        <div class="sp-bar-wrap mt-1"><div class="sp-bar" style="width: <%= pct %>%"></div></div>
-      </div></a>
-    <% }) %>
-  </div>
-  <div class="col-lg-7">
-    <h5>Latest bookings</h5>
-    <% if (!recent.length) { %><p class="text-muted">No bookings yet.</p><% } else { %>
-      <div class="card"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
-        <thead><tr><th>Zone</th><th>Driver</th><th>When</th><th>Status</th></tr></thead>
-        <tbody>
-          <% recent.forEach(function (b) { %>
-            <tr><td><%= b.zone ? b.zone.name : '' %></td><td><%= b.user ? b.user.name : '' %></td><td><%= fmt.dateTime(b.startTime) %></td><td><span class="badge text-bg-<%= fmt.statusClass(b.status) %>"><%= fmt.statusLabel(b.status) %></span></td></tr>
-          <% }) %>
-        </tbody></table></div></div>
+<div class="db-page">
+
+  <%# 1. Header %>
+  <header class="db-pagehead">
+    <div>
+      <h1 class="db-pagehead__title">Owner dashboard</h1>
+      <p class="db-muted mb-0"><i class="bi bi-calendar3" aria-hidden="true"></i> <%= todayLabel %></p>
+    </div>
+    <a href="/owner/zones/new" class="btn btn-primary rounded-pill px-4"><i class="bi bi-plus-lg" aria-hidden="true"></i> Add zone</a>
+  </header>
+
+  <%# 8. Onboarding checklist (only while something is still open; shown first so a new account sees what to do) %>
+  <% if (onboarding.show) { %>
+    <section class="db-card db-pad db-onboard" aria-labelledby="db-onboard-title">
+      <div class="db-head">
+        <div>
+          <h2 class="db-section__title mb-1" id="db-onboard-title">Get set up</h2>
+          <p class="db-muted mb-0"><%= onboarding.done %> of <%= onboarding.total %> steps done</p>
+        </div>
+      </div>
+      <div class="db-bar db-bar--thin" role="progressbar" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="<%= onboarding.total %>" aria-valuenow="<%= onboarding.done %>">
+        <div class="db-bar__fill" style="width: <%= Math.round(onboarding.done / onboarding.total * 100) %>%"></div>
+      </div>
+      <ol class="db-steps">
+        <% onboarding.steps.forEach(function (s) { %>
+          <li class="db-step<%= s.done ? ' is-done' : '' %><%= s.current ? ' is-current' : '' %>">
+            <span class="db-step__icon" aria-hidden="true"><i class="bi <%= s.done ? 'bi-check-circle-fill' : 'bi-circle' %>"></i></span>
+            <span class="db-step__text">
+              <strong><%= s.label %></strong><span class="visually-hidden"><%= s.done ? ' (done)' : ' (to do)' %></span>
+              <span class="db-muted"><%= s.hint %></span>
+            </span>
+            <% if (s.current) { %><a class="btn btn-primary btn-sm rounded-pill px-3" href="<%= s.href %>">Start <i class="bi bi-arrow-right" aria-hidden="true"></i></a><% } %>
+          </li>
+        <% }) %>
+      </ol>
+    </section>
+  <% } %>
+
+  <%# 2. KPI tiles %>
+  <section class="db-section" aria-labelledby="db-kpi-title">
+    <h2 class="visually-hidden" id="db-kpi-title">Key numbers</h2>
+    <div class="db-tiles db-tiles--kpi">
+      <% tiles.forEach(function (t) { %><%- include('../includes/db-stat-tile', Object.assign({ kpi: true }, t)) %><% }) %>
+    </div>
+  </section>
+
+  <%# 3. Your zones %>
+  <section class="db-section" aria-labelledby="db-zones-title">
+    <div class="db-head">
+      <h2 class="db-section__title mb-0" id="db-zones-title">Your zones</h2>
+      <% if (zoneCount) { %><a class="db-link" href="/owner/zones"><%= zoneCount > cards.length ? 'All ' + zoneCount + ' zones' : 'Manage zones' %> <i class="bi bi-arrow-right" aria-hidden="true"></i></a><% } %>
+    </div>
+    <% if (!cards.length) { %>
+      <div class="db-card">
+        <%- include('../includes/db-empty', { illus: 'zone', title: 'No zones yet', text: 'Add your first parking zone to start taking bookings. It only takes a few minutes.', href: '/owner/zones/new', cta: 'Add your first zone', ctaIcon: 'bi-plus-lg' }) %>
+      </div>
+    <% } else { %>
+      <div class="db-ozones">
+        <% cards.forEach(function (c) { %><%- include('../includes/db-owner-zone', { c: c }) %><% }) %>
+      </div>
     <% } %>
+  </section>
+
+  <%# 4. Revenue chart + occupancy ring %>
+  <section class="db-section" aria-labelledby="db-rev-title">
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <div class="db-card db-pad h-100">
+          <div class="db-head">
+            <div>
+              <h2 class="db-section__title mb-1" id="db-rev-title">Revenue, last 7 days</h2>
+              <p class="db-muted mb-0">Net of refunds<% if (week.hasRevenue) { %> · <strong><%= fmt.currency(week.total) %></strong> in total<% } %></p>
+            </div>
+            <a class="db-link" href="/owner/revenue">Full revenue <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+          </div>
+          <% if (week.hasRevenue) { %>
+            <div class="db-chart">
+              <canvas id="db-rev-chart" role="img" aria-label="<%= week.ariaLabel %>"
+                data-labels="<%= JSON.stringify(week.days.map(function (x) { return x.label; })) %>"
+                data-values="<%= JSON.stringify(week.days.map(function (x) { return x.net; })) %>"></canvas>
+            </div>
+            <%# Shown only if Chart.js could not load %>
+            <table class="table table-sm db-chart-fallback" data-db-chart-fallback hidden>
+              <thead><tr><th scope="col">Day</th><th scope="col" class="text-end">Net revenue</th></tr></thead>
+              <tbody><% week.days.forEach(function (x) { %><tr><td><%= x.label %></td><td class="text-end"><%= fmt.currency(x.net) %></td></tr><% }) %></tbody>
+            </table>
+          <% } else { %>
+            <%- include('../includes/db-empty', { illus: 'chart', title: 'No revenue in the last 7 days', text: 'When drivers pay for bookings, your daily revenue shows up here as a bar chart.', href: nextStep.href, cta: nextStep.label, ctaIcon: nextStep.icon, compact: true }) %>
+          <% } %>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="db-card db-pad h-100 db-ringcard">
+          <h2 class="db-section__title">Occupancy right now</h2>
+          <% if (ring.total) { %>
+            <div class="db-ring" style="--db-pct: <%= ring.pct %>" role="img" aria-label="<%= ring.pct %> percent of bays occupied"><span class="db-ring__val"><%= ring.pct %>%</span></div>
+            <p class="db-muted mb-0 text-center"><strong><%= ring.busy %></strong> of <strong><%= ring.total %></strong> bays occupied across all zones</p>
+          <% } else { %>
+            <%- include('../includes/db-empty', { illus: 'zone', title: 'No bays yet', text: 'Add slots to a zone to see how full your parking is.', href: nextStep.href, cta: nextStep.label, ctaIcon: nextStep.icon, compact: true }) %>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <%# 6. Quick actions %>
+  <section class="db-section" aria-labelledby="db-qa-title">
+    <h2 class="db-section__title" id="db-qa-title">Quick actions</h2>
+    <div class="db-actions">
+      <% quickActions.forEach(function (a) { %>
+        <a class="db-action db-lift" href="<%= a.href %>">
+          <span class="db-action__icon" aria-hidden="true"><i class="bi <%= a.icon %>"></i></span>
+          <span class="db-action__text"><strong><%= a.label %></strong><span class="db-muted"><%= a.hint %></span></span>
+        </a>
+      <% }) %>
+    </div>
+  </section>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <%# 5. Today's bookings timeline %>
+      <section class="db-section" aria-labelledby="db-today-title">
+        <div class="db-head">
+          <h2 class="db-section__title mb-0" id="db-today-title">Today's bookings<% if (timeline.length) { %> <span class="db-count"><%= timeline.length %></span><% } %></h2>
+        </div>
+        <div class="db-card">
+          <% if (!timeline.length) { %>
+            <%- include('../includes/db-empty', { illus: 'list', title: 'No bookings today', text: 'Bookings that start today line up here in time order, with the driver, the bay and the amount.', href: nextStep.href, cta: nextStep.label, ctaIcon: nextStep.icon }) %>
+          <% } else { %>
+            <ol class="db-timeline db-timeline--timed">
+              <% timeline.forEach(function (b) { %>
+                <li class="db-timeline__item db-timeline__item--<%= fmt.statusClass(b.status) %>">
+                  <span class="db-timeline__time"><%= fmt.timeOnly(b.startTime) %></span>
+                  <span class="db-timeline__dot" aria-hidden="true"><i class="bi <%= b.icon %>"></i></span>
+                  <div class="db-timeline__body">
+                    <span class="db-timeline__title"><%= b.user ? b.user.name : 'Driver' %></span>
+                    <span class="db-muted"><%= b.zone ? b.zone.name : 'Zone' %> · Slot <%= b.slotLabel %> · <%= fmt.timeOnly(b.startTime) %> to <%= fmt.timeOnly(b.endTime) %></span>
+                  </div>
+                  <span class="db-timeline__side">
+                    <strong class="db-timeline__amt<%= ['cancelled', 'no_show'].includes(b.status) ? ' is-struck' : '' %>"><%= fmt.currency(b.totalAmount) %></strong>
+                    <%- include('../includes/db-status-badge', { status: b.status }) %>
+                  </span>
+                </li>
+              <% }) %>
+            </ol>
+          <% } %>
+        </div>
+      </section>
+
+      <%# Recent bookings (the old "Latest bookings" table, made compact) %>
+      <section class="db-section" aria-labelledby="db-recent-title">
+        <div class="db-head">
+          <h2 class="db-section__title mb-0" id="db-recent-title">Recent bookings</h2>
+          <% if (recent.length) { %><a class="db-link" href="/owner/bookings">View all <i class="bi bi-arrow-right" aria-hidden="true"></i></a><% } %>
+        </div>
+        <div class="db-card">
+          <% if (!recent.length) { %>
+            <%- include('../includes/db-empty', { illus: 'list', title: 'No bookings yet', text: 'Your latest bookings will be listed here with the zone, the driver and the status.', href: nextStep.href, cta: nextStep.label, ctaIcon: nextStep.icon, compact: true }) %>
+          <% } else { %>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle db-table mb-0">
+                <thead><tr><th scope="col">Zone</th><th scope="col">Driver</th><th scope="col">When</th><th scope="col">Status</th></tr></thead>
+                <tbody>
+                  <% recent.forEach(function (b) { %>
+                    <tr>
+                      <td><%= b.zone ? b.zone.name : '' %></td>
+                      <td><%= b.user ? b.user.name : '' %></td>
+                      <td class="text-nowrap"><%= fmt.dateTime(b.startTime) %></td>
+                      <td><%- include('../includes/db-status-badge', { status: b.status }) %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-lg-4">
+      <%# 7. Premium AI card: clearly NOT live %>
+      <aside class="db-premium" aria-labelledby="db-prem-title">
+        <span class="db-premium__badge"><%= premium.status %></span>
+        <h2 class="db-premium__title" id="db-prem-title">Live occupancy from CCTV</h2>
+        <p class="db-premium__text">A planned Premium feature: a camera at the gate would spot vehicles arriving and leaving, so SPACER could record real arrival and departure times without manual check-ins.</p>
+        <div class="db-premium__preview" role="img" aria-label="Illustration of a camera view over six parking bays. Not real data.">
+          <span class="db-premium__tag">Preview · illustrative</span>
+          <span class="db-premium__bays" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        </div>
+        <p class="db-premium__privacy"><i class="bi bi-shield-lock" aria-hidden="true"></i> Only entry and exit events would be stored, never raw video.</p>
+        <p class="db-premium__note"><%= premium.note %></p>
+      </aside>
+    </div>
   </div>
+
 </div>
-<% } %>
