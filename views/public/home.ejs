@@ -1,58 +1,362 @@
 <% layout('/layouts/boilerplate') -%>
-<section class="sp-hero mb-5">
-  <div class="row align-items-center g-4">
-    <div class="col-lg-7">
-      <h1 class="mb-3">Smarter Parking, Happier Cities.</h1>
-      <p class="fs-5 mb-4">Drivers book a guaranteed bay before they leave home. Owners turn idle space into steady income. Prices follow real demand, and every price is explained.</p>
-      <a href="/user/register" class="btn btn-paint btn-lg me-2 mb-2">Find parking</a>
-      <a href="/owner/register" class="btn btn-outline-light btn-lg mb-2">List your space</a>
+<link rel="stylesheet" href="/css/landing.css">
+<script src="/js/landing.js" defer></script>
+<%
+  // Presentation-only data for the illustrative mocks (not real usage data).
+  // Data comes from controllers/publicController.js. Bare names (not locals.x) are used because
+  // inside an ejs-mate view, `locals` is ejs-mate's own object, not the render data.
+  const premiumData = (typeof premium !== 'undefined' && premium) || {};
+  const premiumStatus = premiumData.status || 'Planned feature';
+  const premiumSummary = premiumData.summary || '';
+  const premiumFaq = premiumData.faq || 'Not yet. This is a planned feature.';
+  const landingTiles = (typeof tiles !== 'undefined' && Array.isArray(tiles)) ? tiles : [];
+
+  const heroSlots = [
+    ['A-01', 'free'], ['A-02', 'booked'], ['A-03', 'free', true], ['A-04', 'booked'],
+    ['B-01', 'booked'], ['B-02', 'free'], ['B-03', 'maint'], ['B-04', 'free'],
+    ['C-01', 'free'], ['C-02', 'booked'], ['C-03', 'free'], ['C-04', 'booked'],
+  ];
+  const slotIcon = { free: 'p-circle', booked: 'car-front-fill', maint: 'cone-striped' };
+
+  const steps = [
+    ['person-plus', 'Register', 'Create a free driver or owner account.'],
+    ['search', 'Search', 'Pick a place and time, then see free slots.'],
+    ['calendar-check', 'Book', 'Choose a slot. It is held for you for 10 minutes.'],
+    ['credit-card', 'Pay', 'Pay with Razorpay (test mode) and get a receipt.'],
+    ['sign-turn-right-fill', 'Navigate', 'Open Google Maps directions to the zone.'],
+  ];
+
+  const pipeline = [
+    ['camera-video', 'CCTV feed', 'Camera streams reach SPACER through an API.'],
+    ['cpu', 'AI vehicle detection', 'Computer vision spots a vehicle in each slot.'],
+    ['clock-history', 'Slot occupancy + timestamps', 'Each slot gets a state and a time.'],
+    ['speedometer2', 'Live owner dashboard', 'Owners see arrivals, departures and dwell time.'],
+  ];
+
+  const faqs = [
+    ['How are double bookings prevented?',
+     'Before a booking is created, SPACER checks that no confirmed booking or live payment hold overlaps your slot and time. After the booking is saved it checks again, so if two people tap at the same moment only one keeps the slot and the other is asked to pick another. An unpaid hold lasts 10 minutes and is then released.'],
+    ['How does payment work?',
+     'Payments go through Razorpay in test mode. No real money moves: you pay with Razorpay\u2019s test cards or test UPI options, the booking is confirmed and you get a receipt. Accepting real payments would need live Razorpay keys, which this demo does not use.'],
+    ['Do directions go to my exact bay?',
+     'No. \u201cGet directions\u201d opens Google Maps with directions from your location to the zone entrance, not to a single bay. Your bay label (for example A-03) is shown in your booking, so you know where to park once you are inside.'],
+    ['How does dynamic pricing work?',
+     'The hourly price is the zone\u2019s base price multiplied by a demand factor (from the demand forecast), a time factor (peak hours, weekends, late night, festival days) and an occupancy factor (how full the zone is). The result stays between 0.8\u00d7 and 2\u00d7 of the base price, and the \u201cWhy this price?\u201d breakdown shows each factor.'],
+    ['Is the Premium AI tier available?', premiumFaq],
+  ];
+%>
+
+<div class="lp-page">
+
+  <!-- 1. HERO -->
+  <section class="lp-bleed lp-hero" aria-labelledby="lp-hero-title">
+    <div class="lp-wrap lp-hero__grid">
+      <div class="lp-hero__copy">
+        <p class="lp-pill"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Parking marketplace &middot; Pune</p>
+        <h1 id="lp-hero-title" class="lp-h1">Park <span class="lp-hl">smarter</span>. Earn from empty space.</h1>
+        <p class="lp-lead">Drivers find and book parking slots in real time. Owners earn from space that would otherwise sit idle.</p>
+        <div class="lp-actions">
+          <a href="/user/register" class="btn btn-lg lp-btn lp-btn-primary" aria-label="Find parking: create a driver account">Find parking</a>
+          <a href="/owner/register" class="btn btn-lg lp-btn lp-btn-ghost" aria-label="List your space: create an owner account">List your space</a>
+        </div>
+        <p class="lp-login">Already have an account? Log in as a <a href="/user/login">driver</a> or an <a href="/owner/login">owner</a>.</p>
+      </div>
+
+      <div class="lp-hero__visual">
+        <div class="lp-mockwrap">
+          <div class="lp-mock" role="img" aria-label="Illustrative preview of a SPACER parking zone: a grid of free, booked and maintenance slots, a peak-hour price of 40 rupees per hour, and a Get directions button.">
+            <div class="lp-mock__bar">
+              <span class="lp-mock__title">Sample zone</span>
+              <span class="lp-tag">Illustrative preview</span>
+            </div>
+            <div class="lp-mock__meta">
+              <span class="lp-mock__time"><i class="bi bi-clock" aria-hidden="true"></i> Today &middot; 6 to 8 pm</span>
+              <span class="lp-chip lp-chip--price">&#8377;40/h &middot; peak</span>
+            </div>
+            <div class="lp-slots">
+              <% heroSlots.forEach(function (s) { %>
+                <div class="lp-slot lp-slot--<%= s[1] %>" data-lp-slot<%= s[2] ? ' data-lp-static' : '' %>>
+                  <i class="bi bi-<%= slotIcon[s[1]] %>" aria-hidden="true"></i><span><%= s[0] %></span>
+                </div>
+              <% }) %>
+            </div>
+            <div class="lp-legend">
+              <span><i class="lp-dot lp-dot--free"></i>Free</span>
+              <span><i class="lp-dot lp-dot--booked"></i>Booked</span>
+              <span><i class="lp-dot lp-dot--maint"></i>Maintenance</span>
+            </div>
+            <div class="lp-mock__foot">
+              <span class="lp-chip lp-chip--dir"><i class="bi bi-sign-turn-right-fill" aria-hidden="true"></i> Get directions</span>
+              <span class="lp-why">Why this price?</span>
+            </div>
+          </div>
+
+          <span class="lp-float lp-float--a" aria-hidden="true"><i class="lp-dot lp-dot--free"></i>Slot A-03 free</span>
+          <span class="lp-float lp-float--b" aria-hidden="true"><i class="bi bi-car-front-fill"></i>Booked &middot; 2 h</span>
+          <span class="lp-float lp-float--c" aria-hidden="true"><i class="bi bi-cash-coin"></i>Owner earned &#8377;320 today</span>
+          <span class="lp-float lp-float--d" aria-hidden="true"><i class="bi bi-hourglass-split"></i>Held &middot; 10 min</span>
+        </div>
+        <p class="lp-note">Preview with sample data. Not real usage.</p>
+      </div>
     </div>
-    <div class="col-lg-5">
-      <div class="sp-baymap sp-baymap--hero" aria-hidden="true">
-        <% ['A-01:booked','A-02:available','A-03:booked','A-04:available','B-01:available','B-02:booked','B-03:maintenance','B-04:available','C-01:booked','C-02:booked','C-03:available','C-04:available'].forEach(function (s) { const p = s.split(':'); %>
-          <div class="bay bay--<%= p[1] %>"><i class="bi bi-<%= p[1] === 'booked' ? 'car-front-fill' : p[1] === 'maintenance' ? 'cone-striped' : 'p-circle' %>"></i><%= p[0] %></div>
+  </section>
+
+  <!-- 2. BUILT WITH -->
+  <section class="lp-bleed lp-strip" aria-labelledby="lp-built-title">
+    <div class="lp-wrap lp-strip__inner">
+      <h2 id="lp-built-title" class="lp-strip__title">Built with</h2>
+      <ul class="lp-strip__list">
+        <li><i class="bi bi-hexagon-fill" aria-hidden="true"></i> Node.js</li>
+        <li><i class="bi bi-braces" aria-hidden="true"></i> Express</li>
+        <li><i class="bi bi-database-fill" aria-hidden="true"></i> MongoDB</li>
+        <li><i class="bi bi-credit-card-2-front-fill" aria-hidden="true"></i> Razorpay (test mode)</li>
+        <li><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Google Maps</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3. HOW IT WORKS -->
+  <section id="how-it-works" class="lp-bleed lp-section" aria-labelledby="lp-how-title">
+    <div class="lp-wrap">
+      <div class="lp-head" data-lp-reveal>
+        <h2 id="lp-how-title" class="lp-h2">How it works</h2>
+        <p class="lp-sub">From sign-up to your bay in five steps.</p>
+      </div>
+      <ol class="lp-steps" data-lp-reveal-group>
+        <% steps.forEach(function (s, i) { %>
+          <li class="lp-step" data-lp-reveal>
+            <span class="lp-step__no" aria-hidden="true"><%= i + 1 %></span>
+            <span class="lp-step__icon" aria-hidden="true"><i class="bi bi-<%= s[0] %>"></i></span>
+            <h3 class="lp-h3"><%= s[1] %></h3>
+            <p><%= s[2] %></p>
+          </li>
+        <% }) %>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 4. FEATURES (bento) -->
+  <section id="features" class="lp-bleed lp-section lp-section--tint" aria-labelledby="lp-feat-title">
+    <div class="lp-wrap">
+      <div class="lp-head" data-lp-reveal>
+        <h2 id="lp-feat-title" class="lp-h2">Everything a zone needs to run itself</h2>
+        <p class="lp-sub">Real features in the app today. Small visuals below are illustrative.</p>
+      </div>
+
+      <div class="lp-bento" data-lp-reveal-group>
+
+        <article class="lp-card lp-card--7" data-lp-reveal>
+          <span class="lp-card__icon" aria-hidden="true"><i class="bi bi-grid-3x3-gap-fill"></i></span>
+          <h3 class="lp-h3">Live availability</h3>
+          <p>See which slots are free for the exact time window you choose, not just right now.</p>
+          <div class="lp-viz" aria-hidden="true">
+            <div class="lp-mini-slots">
+              <% ['free','free','booked','free','booked','free','maint','free','booked','free','free','booked'].forEach(function (st) { %><i class="lp-mini-slot lp-mini-slot--<%= st %>"></i><% }) %>
+            </div>
+            <span class="lp-tag">Illustrative</span>
+          </div>
+        </article>
+
+        <article class="lp-card lp-card--5" data-lp-reveal>
+          <span class="lp-card__icon" aria-hidden="true"><i class="bi bi-tags-fill"></i></span>
+          <h3 class="lp-h3">Smart pricing, explained</h3>
+          <p>Prices follow time and demand. &ldquo;Why this price?&rdquo; shows every factor.</p>
+          <div class="lp-viz" aria-hidden="true">
+            <div class="lp-factors">
+              <span>Base &#8377;30</span><span>Peak &times;1.15</span><span>Demand &times;1.10</span><span>Occupancy &times;1.05</span><strong>&asymp; &#8377;40/h</strong>
+            </div>
+            <span class="lp-tag">Illustrative</span>
+          </div>
+        </article>
+
+        <article class="lp-card lp-card--5" data-lp-reveal>
+          <span class="lp-card__icon" aria-hidden="true"><i class="bi bi-shield-check"></i></span>
+          <h3 class="lp-h3">No double booking</h3>
+          <p>Every slot is checked twice, and a 10-minute hold keeps it yours while you pay.</p>
+          <div class="lp-viz" aria-hidden="true">
+            <div class="lp-hold">
+              <div class="lp-hold__row"><span>Slot held for you</span><b>10:00</b></div>
+              <div class="lp-hold__track"><i></i></div>
+            </div>
+            <span class="lp-tag">Illustrative</span>
+          </div>
+        </article>
+
+        <article class="lp-card lp-card--7" data-lp-reveal>
+          <span class="lp-card__icon" aria-hidden="true"><i class="bi bi-sign-turn-right-fill"></i></span>
+          <h3 class="lp-h3">Google Maps directions</h3>
+          <p>One tap opens Google Maps with directions from where you are to the zone entrance.</p>
+          <div class="lp-viz" aria-hidden="true">
+            <div class="lp-route">
+              <i class="lp-route__a"></i><i class="lp-route__line"></i><i class="bi bi-geo-alt-fill lp-route__b"></i>
+              <span class="lp-chip lp-chip--dir"><i class="bi bi-sign-turn-right-fill"></i> Get directions</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="lp-card lp-card--7" data-lp-reveal>
+          <span class="lp-card__icon" aria-hidden="true"><i class="bi bi-bar-chart-line-fill"></i></span>
+          <h3 class="lp-h3">Owner dashboard and revenue</h3>
+          <p>Manage zones and slots, and follow bookings and revenue in one place.</p>
+          <div class="lp-viz" aria-hidden="true">
+            <div class="lp-bars">
+              <% [['Mon',38],['Tue',52],['Wed',44],['Thu',64],['Fri',82],['Sat',96],['Sun',58]].forEach(function (b) { %>
+                <div class="lp-bars__col"><i style="--h: <%= b[1] %>%"></i><span><%= b[0] %></span></div>
+              <% }) %>
+            </div>
+            <span class="lp-tag">Illustrative</span>
+          </div>
+        </article>
+
+        <article class="lp-card lp-card--5" data-lp-reveal>
+          <span class="lp-card__icon" aria-hidden="true"><i class="bi bi-graph-up-arrow"></i></span>
+          <h3 class="lp-h3">Demand forecast and price tips</h3>
+          <p>Owners see expected demand for each hour, based on past bookings, with a suggested price.</p>
+          <div class="lp-viz" aria-hidden="true">
+            <div class="lp-bars lp-bars--forecast">
+              <% [20,28,40,55,48,36,42,60,84,92,70,38].forEach(function (v, i) { %>
+                <div class="lp-bars__col"><i class="<%= v >= 80 ? 'is-peak' : '' %>" style="--h: <%= v %>%"></i></div>
+              <% }) %>
+            </div>
+            <span class="lp-chip lp-chip--price">Suggest &#8377;45/h at 6 pm</span>
+            <span class="lp-tag">Illustrative</span>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. AUDIENCES -->
+  <section id="audiences" class="lp-bleed lp-section" aria-labelledby="lp-aud-title">
+    <div class="lp-wrap">
+      <div class="lp-head" data-lp-reveal>
+        <h2 id="lp-aud-title" class="lp-h2">One platform, two sides of parking</h2>
+        <p class="lp-sub">Drivers and owners get separate accounts and separate screens.</p>
+      </div>
+      <div class="lp-aud" data-lp-reveal-group>
+        <article class="lp-panel" data-lp-reveal>
+          <span class="lp-card__icon" aria-hidden="true"><i class="bi bi-car-front-fill"></i></span>
+          <h3 class="lp-h3">For drivers</h3>
+          <ul class="lp-ticks">
+            <li>See live free slots for the time window you choose.</li>
+            <li>Hold a slot for 10 minutes while you pay, with no double booking.</li>
+            <li>See exactly why a price is what it is.</li>
+            <li>Cancel for free up to 2 hours before you arrive.</li>
+          </ul>
+          <a href="/user/register" class="btn lp-btn lp-btn-primary" aria-label="Sign up as a driver">Sign up as a driver</a>
+          <p class="lp-small">Have an account? <a href="/user/login">Log in</a></p>
+        </article>
+        <article class="lp-panel" data-lp-reveal>
+          <span class="lp-card__icon" aria-hidden="true"><i class="bi bi-building"></i></span>
+          <h3 class="lp-h3">For owners</h3>
+          <ul class="lp-ticks">
+            <li>List a zone and add its slots in minutes.</li>
+            <li>Follow bookings and revenue on one dashboard.</li>
+            <li>Get a demand forecast and price suggestions on the Insights page.</li>
+            <li>Use a separate owner account, kept apart from driver accounts.</li>
+          </ul>
+          <a href="/owner/register" class="btn lp-btn lp-btn-primary" aria-label="Sign up as an owner">Sign up as an owner</a>
+          <p class="lp-small">Have an account? <a href="/owner/login">Log in</a></p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. PREMIUM AI (dark highlight) -->
+  <section id="premium" class="lp-bleed lp-dark" aria-labelledby="lp-prem-title">
+    <div class="lp-wrap">
+      <div class="lp-head lp-head--dark" data-lp-reveal>
+        <p class="lp-badges">
+          <span class="lp-badge-premium"><i class="bi bi-stars" aria-hidden="true"></i> <%= premiumStatus %></span>
+          <span class="lp-tag lp-tag--dark">Premium owner tier</span>
+        </p>
+        <h2 id="lp-prem-title" class="lp-h2">Know exactly when every car arrives and leaves.</h2>
+        <p class="lp-sub"><%= premiumSummary %></p>
+      </div>
+
+      <ol class="lp-pipe" data-lp-reveal-group>
+        <% pipeline.forEach(function (p) { %>
+          <li class="lp-pipe__step" data-lp-reveal>
+            <span class="lp-pipe__icon" aria-hidden="true"><i class="bi bi-<%= p[0] %>"></i></span>
+            <h3 class="lp-h3"><%= p[1] %></h3>
+            <p><%= p[2] %></p>
+          </li>
+        <% }) %>
+      </ol>
+
+      <div class="lp-dark__lower" data-lp-reveal>
+        <div class="lp-timeline" role="img" aria-label="Illustrative preview of an owner timeline: Slot B-07 arrived 10:42, left 12:15, 1 hour 33 minutes. Slot A-02 arrived 11:05 and is still parked.">
+          <div class="lp-timeline__bar">
+            <span>Owner timeline</span>
+            <span class="lp-tag lp-tag--dark">Illustrative preview</span>
+          </div>
+          <div class="lp-tl-row">
+            <div class="lp-tl-text"><b>Slot B-07</b> &middot; arrived 10:42 &middot; left 12:15 &middot; 1 h 33 m</div>
+            <div class="lp-tl-track"><i style="--s: 23%; --l: 52%"></i></div>
+          </div>
+          <div class="lp-tl-row">
+            <div class="lp-tl-text"><b>Slot A-02</b> &middot; arrived 11:05 &middot; still parked</div>
+            <div class="lp-tl-track"><i class="is-live" style="--s: 36%; --l: 47%"></i></div>
+          </div>
+          <div class="lp-tl-scale" aria-hidden="true"><span>10:00</span><span>11:00</span><span>12:00</span><span>13:00</span></div>
+        </div>
+        <p class="lp-privacy"><i class="bi bi-shield-lock-fill" aria-hidden="true"></i> Privacy-first: only events (slot, state, time) are stored, not raw video.</p>
+      </div>
+    </div>
+  </section>
+
+  <% if (landingTiles.length) { %>
+  <!-- 7. NUMBERS (real values only) -->
+  <section id="numbers" class="lp-bleed lp-section" aria-labelledby="lp-num-title">
+    <div class="lp-wrap">
+      <div class="lp-head" data-lp-reveal>
+        <h2 id="lp-num-title" class="lp-h2">SPACER in numbers</h2>
+        <p class="lp-sub">Counted from this demo&rsquo;s database. Simulated results are labelled as such.</p>
+      </div>
+      <ul class="lp-tiles" data-lp-reveal-group>
+        <% landingTiles.forEach(function (t) { %>
+          <li class="lp-tile" data-lp-reveal>
+            <span class="lp-tile__value"><%= t.value %></span>
+            <span class="lp-tile__label"><%= t.label %></span>
+            <span class="lp-tile__note"><%= t.note %></span>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- 8. FAQ -->
+  <section id="faq" class="lp-bleed lp-section <%= landingTiles.length ? 'lp-section--tint' : '' %>" aria-labelledby="lp-faq-title">
+    <div class="lp-wrap lp-wrap--narrow">
+      <div class="lp-head" data-lp-reveal>
+        <h2 id="lp-faq-title" class="lp-h2">Questions, answered honestly</h2>
+      </div>
+      <div class="accordion lp-faq" id="lpFaq" data-lp-reveal>
+        <% faqs.forEach(function (f, i) { const open = i === 0; %>
+          <div class="accordion-item">
+            <h3 class="accordion-header">
+              <button class="accordion-button<%= open ? '' : ' collapsed' %>" type="button" data-bs-toggle="collapse" data-bs-target="#lp-faq-<%= i + 1 %>" aria-expanded="<%= open ? 'true' : 'false' %>" aria-controls="lp-faq-<%= i + 1 %>"><%= f[0] %></button>
+            </h3>
+            <div id="lp-faq-<%= i + 1 %>" class="accordion-collapse collapse<%= open ? ' show' : '' %>" data-bs-parent="#lpFaq">
+              <div class="accordion-body"><%= f[1] %></div>
+            </div>
+          </div>
         <% }) %>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="mb-5">
-  <h2 class="mb-3">How it works</h2>
-  <div class="row g-3">
-    <% [['Register','Create a free driver or owner account.','person-plus'],['Search','Pick a place and time. See live free bays.','search'],['Book','Choose a bay. It is held for you for 10 minutes.','calendar-check'],['Pay','Pay securely and get a receipt.','credit-card']].forEach(function (s, i) { %>
-      <div class="col-6 col-lg-3">
-        <div class="sp-step">
-          <div class="sp-step-no"><%= i + 1 %></div>
-          <h5><i class="bi bi-<%= s[2] %> me-1"></i><%= s[0] %></h5>
-          <p class="text-muted mb-0 small"><%= s[1] %></p>
-        </div>
+  <!-- 9. FINAL CTA -->
+  <section class="lp-bleed lp-cta" aria-labelledby="lp-cta-title">
+    <div class="lp-wrap lp-cta__inner">
+      <h2 id="lp-cta-title" class="lp-h2">Smarter Parking, Happier Cities.</h2>
+      <div class="lp-actions lp-actions--center">
+        <a href="/user/register" class="btn btn-lg lp-btn lp-btn-paint" aria-label="Find parking: create a driver account">Find parking</a>
+        <a href="/owner/register" class="btn btn-lg lp-btn lp-btn-light" aria-label="List your space: create an owner account">List your space</a>
       </div>
-    <% }) %>
-  </div>
-</section>
+    </div>
+  </section>
 
-<section class="row g-3 mb-5">
-  <div class="col-md-6">
-    <div class="card h-100"><div class="card-body p-4">
-      <h3>For drivers</h3>
-      <ul class="text-muted ps-3">
-        <li>No more circling the block. Your bay is waiting.</li>
-        <li>See exactly why a price is what it is.</li>
-        <li>Free cancellation up to 2 hours before you arrive.</li>
-      </ul>
-      <a href="/user/register" class="btn btn-primary">Sign up as a driver</a>
-    </div></div>
-  </div>
-  <div class="col-md-6">
-    <div class="card h-100"><div class="card-body p-4">
-      <h3>For owners</h3>
-      <ul class="text-muted ps-3">
-        <li>List a zone and add slots in minutes.</li>
-        <li>Track bookings and revenue in one place.</li>
-        <li>Get a demand forecast and price suggestions for every hour.</li>
-      </ul>
-      <a href="/owner/register" class="btn btn-primary">Sign up as an owner</a>
-    </div></div>
-  </div>
-</section>
+</div>
