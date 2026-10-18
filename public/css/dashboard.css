@@ -349,3 +349,51 @@
   .db-step { grid-template-columns: auto 1fr; }
   .db-step .btn { grid-column: 2; justify-self: start; }
 }
+
+/* ---------- Parking near you (driver map card) ---------- */
+.db-map { display: flex; flex-direction: column; }
+.db-map__stage { position: relative; min-height: 340px; margin: .75rem .75rem 0; border-radius: var(--db-radius-sm); overflow: hidden; background: var(--db-tile); }
+.db-map__canvas { position: relative; z-index: 0; width: 100%; height: 340px; }
+.db-map .leaflet-div-icon { background: transparent; border: 0; }
+.db-map .leaflet-popup-content { margin: .8rem .9rem; }
+@media (min-width: 768px) { .db-map__stage { min-height: 440px; } .db-map__canvas { height: 440px; } }
+.db-map__fallback { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5rem; padding: 1.25rem; text-align: center; background: var(--db-tile); color: var(--sp-muted); }
+.db-map__fallback[hidden] { display: none; }
+.db-map__fallback .bi { font-size: 2rem; color: var(--sp-accent); }
+.db-map__fallback strong { color: var(--sp-ink); }
+
+.db-map__legend { display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; margin: 0; padding: .75rem 1.1rem; list-style: none; font-size: .78rem; color: var(--sp-muted); }
+.db-map__legend li { display: inline-flex; align-items: center; gap: .4rem; }
+.db-key { display: inline-block; width: 1rem; height: 1rem; border-radius: 50%; background: var(--pin, #0a8174); }
+.db-key--ok { --pin: #055247; } .db-key--low { --pin: #a85a00; } .db-key--full { --pin: #8f1d1d; } .db-key--none { --pin: #3f4760; }
+.db-key--booked { --pin: var(--db-navy); box-shadow: 0 0 0 2px var(--db-amber); }
+.db-key--me { --pin: #1558d6; box-shadow: 0 0 0 2px #fff, 0 0 0 3px #1558d6; }
+
+.db-map__booking { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1rem; padding: .9rem 1.1rem; border-top: 1px solid var(--sp-line); background: #fafbfe; }
+.db-map__booking-main { display: flex; flex-direction: column; align-items: flex-start; gap: .2rem; min-width: 0; }
+.db-map__booking-title { font-size: 1rem; }
+.db-map__booking .db-next__actions .btn { padding-inline: .9rem; }
+
+/* Pins: big, dark, high-contrast "P" bubbles with a tail. Size is set by --pin-size (keep in sync with iconSize in dashboard-map.js). */
+.db-pin { --pin: #055247; --pin-size: 44px; display: flex; flex-direction: column; align-items: center; cursor: pointer; filter: drop-shadow(0 3px 4px rgba(10, 16, 36, .55)); }
+.db-pin__dot { display: grid; place-items: center; width: var(--pin-size); height: var(--pin-size); border-radius: 50%; border: 3px solid #fff; background: var(--pin); box-shadow: 0 0 0 2px var(--pin); color: #fff; font: 700 1.2rem/1 "Sora", sans-serif; transition: transform .15s ease; }
+.db-pin::after { content: ""; width: 0; height: 0; margin-top: 1px; border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 12px solid var(--pin); }
+.db-pin:hover .db-pin__dot, .db-pin.is-active .db-pin__dot { transform: scale(1.15); }
+.db-pin--low { --pin: #a85a00; }
+.db-pin--full { --pin: #8f1d1d; }
+.db-pin--none, .db-pin--closed { --pin: #3f4760; }
+.db-pin--booked { --pin: var(--db-navy); }
+.db-pin--booked .db-pin__dot { box-shadow: 0 0 0 4px var(--db-amber); }
+
+/* "You are here" dot: large, bright blue, with a pulsing halo */
+.db-me { position: relative; width: 26px; height: 26px; border-radius: 50%; background: #1558d6; border: 4px solid #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .5); }
+.db-me::before { content: ""; position: absolute; inset: -16px; border-radius: 50%; background: rgba(21, 88, 214, .25); animation: db-me-pulse 2s ease-out infinite; }
+@keyframes db-me-pulse { 0% { transform: scale(.4); opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .db-me::before { animation: none; } .db-pin__dot { transition: none; } }
+
+/* Info window content */
+.db-iw { min-width: 200px; max-width: 250px; font-family: "Public Sans", system-ui, sans-serif; color: #14182b; }
+.db-iw__name { display: block; margin-bottom: .15rem; font-size: 1rem; font-weight: 700; }
+.db-iw__addr { margin: 0 0 .4rem; font-size: .8rem; color: #5a607a; }
+.db-iw__facts { margin: 0 0 .6rem; padding: 0; list-style: none; font-size: .82rem; display: grid; gap: .15rem; }
+.db-iw__actions { display: flex; gap: .4rem; flex-wrap: wrap; }

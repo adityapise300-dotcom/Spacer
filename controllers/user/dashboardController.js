@@ -77,12 +77,13 @@ exports.dashboard = async (req, res) => {
     (busySlotsByZone[k] = busySlotsByZone[k] || new Set()).add(String(b.slot));
   });
 
-  const ranked = zones
-    .map((z) => {
-      const total = totalByZone[String(z._id)] || 0;
-      const busy = busySlotsByZone[String(z._id)] ? busySlotsByZone[String(z._id)].size : 0;
-      return { z, total, free: Math.max(0, total - busy), open: isOpenNow(z, now) };
-    })
+  const scored = zones.map((z) => {
+    const total = totalByZone[String(z._id)] || 0;
+    const busy = busySlotsByZone[String(z._id)] ? busySlotsByZone[String(z._id)].size : 0;
+    return { z, total, free: Math.max(0, total - busy), open: isOpenNow(z, now) };
+  });
+  const ranked = scored
+    .slice()
     .sort((a, b) =>
       (b.total > 0) - (a.total > 0) || b.open - a.open || b.free - a.free || a.z.basePricePerHour - b.z.basePricePerHour)
     .slice(0, LISTING_SIZE);
@@ -125,8 +126,39 @@ exports.dashboard = async (req, res) => {
   const withCountdown = upcoming.map((b) => ({ ...b, countdown: countdownFor(b, now) }));
   const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1);
 
+  // ---- "Parking near you" map: every scored zone with coordinates, as plain JSON for the browser ----
+  const mapTone = (total, free, open) =>
+    total === 0 || !open ? (total === 0 ? 'none' : 'closed') : free === 0 ? 'full' : free / total <= 0.25 ? 'low' : 'ok';
+  const bookedZone = withCountdown[0] && withCountdown[0].zone ? withCountdown[0].zone : null;
+  const bookedId = bookedZone ? String(bookedZone._id) : null;
+  const mapZones = scored
+    .filter(({ z }) => fmt.hasCoords(z))
+    .map(({ z, total, free, open }) => ({
+      id: String(z._id),
+      name: z.name,
+      address: z.address,
+      lat: z.location.coordinates[1],
+      lng: z.location.coordinates[0],
+      price: z.basePricePerHour,
+      free, total, open,
+      tone: mapTone(total, free, open),
+      url: `/user/zones/${z._id}`,
+      dir: fmt.mapsDirectionsUrl(z, { navigate: true }),
+      booked: String(z._id) === bookedId,
+    }));
+  // The booked zone may be inactive or outside the 60 loaded zones: still pin it.
+  if (bookedZone && fmt.hasCoords(bookedZone) && !mapZones.some((m) => m.id === bookedId)) {
+    mapZones.push({
+      id: bookedId, name: bookedZone.name, address: bookedZone.address,
+      lat: bookedZone.location.coordinates[1], lng: bookedZone.location.coordinates[0],
+      price: null, free: null, total: 0, open: true, tone: 'none',
+      url: `/user/zones/${bookedId}`, dir: fmt.mapsDirectionsUrl(bookedZone, { navigate: true }), booked: true,
+    });
+  }
+
   res.render('user/dashboard', {
     pageTitle: 'Dashboard',
+    mapZones,
     nextBooking: withCountdown[0] || null,
     laterBookings: withCountdown.slice(1),
     recent: recent.map((b) => ({ ...b, icon: statusIcon(b.status) })),

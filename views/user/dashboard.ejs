@@ -2,6 +2,10 @@
 <%# The layout has no per-page <head> slot, so the dashboard assets are linked here (these two views only). %>
 <link rel="stylesheet" href="/css/dashboard.css">
 <script src="/js/dashboard.js" defer></script>
+<%# Leaflet + OpenStreetMap: free, no API key. jsDelivr is already allowed by the CSP. Deferred scripts run in order. %>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<script src="/js/dashboard-map.js" defer></script>
 
 <div class="db-page">
 
@@ -24,54 +28,74 @@
     </form>
   </section>
 
-  <%# 2. Next booking %>
-  <section class="db-section" aria-labelledby="db-next-title">
-    <h2 class="db-section__title" id="db-next-title">Your next booking</h2>
-    <% if (nextBooking) { const b = nextBooking; const z = b.zone; %>
-      <article class="db-card db-next">
-        <div class="db-next__media db-media">
-          <% if (z && z.images && z.images[0]) { %>
-            <img class="db-img" src="<%= z.images[0] %>" alt="Photo of <%= z.name %>" loading="lazy" decoding="async">
-          <% } else { %>
-            <div class="db-ph" aria-hidden="true"><span>P</span></div>
-          <% } %>
-          <span class="db-media__badge"><%- include('../includes/db-status-badge', { status: b.status, onPhoto: true }) %></span>
+  <%# 2. Parking near you: Google map with zone pins (replaces the big "next booking" card).
+        The next booking is kept as a compact strip at the bottom of the same card so "Pay now" is never lost. %>
+  <section class="db-section" aria-labelledby="db-map-title">
+    <div class="db-head">
+      <div>
+        <h2 class="db-section__title mb-1" id="db-map-title">Parking near you</h2>
+        <p class="db-muted mb-0" data-map-status role="status" aria-live="polite">Allow location to see parking zones around you.</p>
+      </div>
+      <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" data-map-locate hidden><i class="bi bi-crosshair" aria-hidden="true"></i> Use my location</button>
+    </div>
+
+    <div class="db-card db-map" data-db-map>
+      <%# Plain JSON data block: not executed, so it is allowed by the CSP. "<" is escaped so a zone name can never close the tag. %>
+      <script type="application/json" data-map-zones><%- JSON.stringify(mapZones).replace(/</g, '\\u003c') %></script>
+
+      <div class="db-map__stage">
+        <div class="db-map__canvas" data-map-canvas role="region" aria-label="Map of parking zones near you"></div>
+        <div class="db-map__fallback" data-map-fallback hidden>
+          <i class="bi bi-map" aria-hidden="true"></i>
+          <strong data-map-fallback-title>Map unavailable</strong>
+          <span data-map-fallback-text>The map could not be loaded.</span>
+          <a class="btn btn-primary btn-sm rounded-pill px-3" href="/user/search">Search parking instead</a>
         </div>
-        <div class="db-next__body">
-          <span class="db-countdown db-countdown--<%= b.countdown.tone %>"><i class="bi bi-hourglass-split" aria-hidden="true"></i> <%= b.countdown.text %></span>
-          <h3 class="db-next__title"><%= z ? z.name : 'Parking zone' %></h3>
-          <% if (z) { %><p class="db-next__addr"><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= z.address %></p><% } %>
-          <ul class="db-facts">
-            <li><i class="bi bi-calendar-event" aria-hidden="true"></i> <%= fmt.dateTime(b.startTime) %> to <%= fmt.timeOnly(b.endTime) %></li>
-            <li><i class="bi bi-p-square" aria-hidden="true"></i> Slot <%= b.slotLabel %></li>
-            <li><i class="bi <%= fmt.vehicleIcon(b.vehicleType) %>" aria-hidden="true"></i> <%= b.vehiclePlate %> · <%= fmt.vehicleLabel(b.vehicleType) %></li>
-          </ul>
+      </div>
+
+      <ul class="db-map__legend" aria-label="Map legend">
+        <li><span class="db-key db-key--ok"></span> Bays free</li>
+        <li><span class="db-key db-key--low"></span> Few left</li>
+        <li><span class="db-key db-key--full"></span> Full</li>
+        <li><span class="db-key db-key--none"></span> Closed / no bays</li>
+        <li><span class="db-key db-key--booked"></span> Your booking</li>
+        <li><span class="db-key db-key--me"></span> You</li>
+      </ul>
+
+      <% if (nextBooking) { const b = nextBooking; const z = b.zone; %>
+        <div class="db-map__booking">
+          <div class="db-map__booking-main">
+            <span class="db-countdown db-countdown--<%= b.countdown.tone %>"><i class="bi bi-hourglass-split" aria-hidden="true"></i> <%= b.countdown.text %></span>
+            <strong class="db-map__booking-title"><%= z ? z.name : 'Parking zone' %></strong>
+            <span class="db-muted"><%= fmt.dateTime(b.startTime) %> to <%= fmt.timeOnly(b.endTime) %> · Slot <%= b.slotLabel %> · <%= b.vehiclePlate %></span>
+          </div>
           <div class="db-next__actions">
-            <% if (z) { %><%- include('../includes/directionsButton', { zone: z, label: 'Get directions' }) %><% } %>
-            <% if (b.status === 'pending_payment') { %><a class="btn btn-primary rounded-pill px-4" href="/user/bookings/<%= b._id %>/pay"><i class="bi bi-credit-card" aria-hidden="true"></i> Pay now</a><% } %>
-            <a class="btn btn-outline-secondary rounded-pill px-4" href="/user/bookings/<%= b._id %>">Details</a>
+            <% if (z) { %><%- include('../includes/directionsButton', { zone: z, size: 'sm', label: 'Directions' }) %><% } %>
+            <% if (b.status === 'pending_payment') { %><a class="btn btn-primary btn-sm rounded-pill px-3" href="/user/bookings/<%= b._id %>/pay"><i class="bi bi-credit-card" aria-hidden="true"></i> Pay now</a><% } %>
+            <a class="btn btn-outline-secondary btn-sm rounded-pill px-3" href="/user/bookings/<%= b._id %>">Details</a>
           </div>
         </div>
-      </article>
-
-      <% if (laterBookings.length) { %>
-        <h3 class="db-subtitle">Also coming up</h3>
-        <ul class="db-list">
-          <% laterBookings.forEach(function (lb) { %>
-            <li class="db-list__item">
-              <a class="db-list__main" href="/user/bookings/<%= lb._id %>">
-                <strong><%= lb.zone ? lb.zone.name : 'Parking zone' %></strong>
-                <span class="db-muted"><%= fmt.dateTime(lb.startTime) %> to <%= fmt.timeOnly(lb.endTime) %> · Slot <%= lb.slotLabel %></span>
-              </a>
-              <%- include('../includes/db-status-badge', { status: lb.status }) %>
-            </li>
-          <% }) %>
-        </ul>
+      <% } else { %>
+        <div class="db-map__booking">
+          <div class="db-map__booking-main"><strong class="db-map__booking-title">No upcoming bookings</strong><span class="db-muted">Tap a pin to see free bays, then book in a minute.</span></div>
+          <div class="db-next__actions"><a class="btn btn-primary btn-sm rounded-pill px-3" href="/user/search"><i class="bi bi-search" aria-hidden="true"></i> Find a spot</a></div>
+        </div>
       <% } %>
-    <% } else { %>
-      <div class="db-card">
-        <%- include('../includes/db-empty', { illus: 'park', title: 'No upcoming bookings', text: 'Book a bay in a minute and it will show up here with a live countdown and directions.', href: '/user/search', cta: 'Find a spot', ctaIcon: 'bi-search' }) %>
-      </div>
+    </div>
+
+    <% if (nextBooking && laterBookings.length) { %>
+      <h3 class="db-subtitle">Also coming up</h3>
+      <ul class="db-list">
+        <% laterBookings.forEach(function (lb) { %>
+          <li class="db-list__item">
+            <a class="db-list__main" href="/user/bookings/<%= lb._id %>">
+              <strong><%= lb.zone ? lb.zone.name : 'Parking zone' %></strong>
+              <span class="db-muted"><%= fmt.dateTime(lb.startTime) %> to <%= fmt.timeOnly(lb.endTime) %> · Slot <%= lb.slotLabel %></span>
+            </a>
+            <%- include('../includes/db-status-badge', { status: lb.status }) %>
+          </li>
+        <% }) %>
+      </ul>
     <% } %>
   </section>
 
